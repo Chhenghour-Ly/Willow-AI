@@ -22,3 +22,7 @@ personal-data/
 *.p12
 secrets/
 credentials*.json
+
+# Rendered results emails (contain farmer details)
+outbox/
+.pytest-*/

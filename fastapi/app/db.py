@@ -3,7 +3,7 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 
-from sqlalchemy import JSON, Float, String, create_engine, text
+from sqlalchemy import JSON, Float, Integer, String, UniqueConstraint, create_engine, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 
@@ -29,6 +29,53 @@ class Call(Base):
     matches: Mapped[list] = mapped_column(JSON, default=list)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
     updated_at: Mapped[float] = mapped_column(Float, default=time.time, onupdate=time.time)
+
+
+class EmailDelivery(Base):
+    """One results email per original call and recipient; the unique constraint blocks duplicate sends."""
+    __tablename__ = 'email_deliveries'
+    __table_args__ = (UniqueConstraint('call_id', 'recipient_email'),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    call_id: Mapped[str] = mapped_column(String, index=True)
+    recipient_email: Mapped[str] = mapped_column(String, default='')  # '' when no valid address was given
+    # not_requested | skipped | dry_run | pending | sending | sent | failed | uncertain
+    status: Mapped[str] = mapped_column(String)
+    reason: Mapped[str | None] = mapped_column(String, nullable=True)
+    consent_statement: Mapped[str | None] = mapped_column(String, nullable=True)
+    consent_at: Mapped[str | None] = mapped_column(String, nullable=True)
+    subject: Mapped[str | None] = mapped_column(String, nullable=True)
+    body_text: Mapped[str | None] = mapped_column(String, nullable=True)
+    body_html: Mapped[str | None] = mapped_column(String, nullable=True)
+    provider_message_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    provider_response: Mapped[str | None] = mapped_column(String, nullable=True)
+    sent_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+    created_at: Mapped[float] = mapped_column(Float, default=time.time)
+    updated_at: Mapped[float] = mapped_column(Float, default=time.time, onupdate=time.time)
+
+
+class SmsDelivery(Base):
+    __tablename__ = 'sms_deliveries'
+    __table_args__ = (UniqueConstraint('call_id', 'recipient_phone'),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    call_id: Mapped[str] = mapped_column(String, index=True)
+    recipient_phone: Mapped[str] = mapped_column(String, default='')
+    status: Mapped[str] = mapped_column(String)
+    reason: Mapped[str | None] = mapped_column(String, nullable=True)
+    consent_statement: Mapped[str | None] = mapped_column(String, nullable=True)
+    consent_at: Mapped[str | None] = mapped_column(String, nullable=True)
+    body_text: Mapped[str | None] = mapped_column(String, nullable=True)
+    provider_message_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    provider_status: Mapped[str | None] = mapped_column(String, nullable=True)
+    submitted_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+    created_at: Mapped[float] = mapped_column(Float, default=time.time)
+    updated_at: Mapped[float] = mapped_column(Float, default=time.time, onupdate=time.time)
+
+
+class ReportLink(Base):
+    __tablename__ = 'report_links'
+    call_id: Mapped[str] = mapped_column(String, primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String, unique=True)
+    expires_at: Mapped[float] = mapped_column(Float)
 
 
 def engine_url(url):

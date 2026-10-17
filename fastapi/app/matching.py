@@ -153,6 +153,7 @@ def match_programs(profile: FarmerProfile, programs: list[dict], today: date) ->
             'program_id': program['id'],
             'program_name': program['name'],
             'agency': program['agency'],
+            'description': program.get('description'),
             'repayable': program['repayable'],
             'fit_status': fit,
             'reasons': f.reasons,

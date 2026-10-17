@@ -5,7 +5,12 @@
     "agency": "USDA Natural Resources Conservation Service (NRCS)",
     "kind": "conservation_cost_share",
     "repayable": false,
-    "serves_needs": ["irrigation_upgrade", "water_conservation", "soil_health", "long_term_conservation"],
+    "serves_needs": [
+      "irrigation_upgrade",
+      "water_conservation",
+      "soil_health",
+      "long_term_conservation"
+    ],
     "sources": [
       {
         "url": "https://www.ecfr.gov/current/title-7/subtitle-B/chapter-XIV/subchapter-B/part-1466",
@@ -24,15 +29,41 @@
       }
     ],
     "passages": [
-      {"source": 0, "text": "EQIP provides financial and technical assistance to agricultural producers to plan and install conservation practices that address natural resource concerns such as water quantity, water quality, soil health and irrigation efficiency."},
-      {"source": 1, "text": "Applicants must be agricultural producers and have control of the land for the term of the proposed contract, through ownership or a lease. A renter needs the landowner's permission to install structural practices."},
-      {"source": 1, "text": "To be eligible for irrigation practices that conserve water, the land must have been irrigated in at least 2 of the last 5 years, with a drought exception and a waiver process."},
-      {"source": 1, "text": "Applicants must meet the adjusted gross income limit of $900,000 (form CCC-941), comply with highly erodible land and wetland conservation provisions (form AD-1026), and have farm records established with the Farm Service Agency."},
-      {"source": 0, "text": "NRCS will not pay for a practice initiated or implemented before contract approval unless a waiver was granted before the practice was started."},
-      {"source": 2, "text": "NRCS California accepts applications year-round; applications received by November 6, 2026 are ranked for fiscal year 2027 funding. Later applications are considered in the next ranking period."}
+      {
+        "source": 0,
+        "text": "EQIP provides financial and technical assistance to agricultural producers to plan and install conservation practices that address natural resource concerns such as water quantity, water quality, soil health and irrigation efficiency."
+      },
+      {
+        "source": 1,
+        "text": "Applicants must be agricultural producers and have control of the land for the term of the proposed contract, through ownership or a lease. A renter needs the landowner's permission to install structural practices."
+      },
+      {
+        "source": 1,
+        "text": "To be eligible for irrigation practices that conserve water, the land must have been irrigated in at least 2 of the last 5 years, with a drought exception and a waiver process."
+      },
+      {
+        "source": 1,
+        "text": "Applicants must meet the adjusted gross income limit of $900,000 (form CCC-941), comply with highly erodible land and wetland conservation provisions (form AD-1026), and have farm records established with the Farm Service Agency."
+      },
+      {
+        "source": 0,
+        "text": "NRCS will not pay for a practice initiated or implemented before contract approval unless a waiver was granted before the practice was started."
+      },
+      {
+        "source": 2,
+        "text": "NRCS California accepts applications year-round; applications received by November 6, 2026 are ranked for fiscal year 2027 funding. Later applications are considered in the next ranking period."
+      }
     ],
-    "deadlines": {"CA": {"date": "2026-11-06", "source": 2, "note": "California ranking cutoff for FY2027 funding"}},
-    "next_action": "Contact the USDA Service Center for {county} and ask the NRCS office about EQIP before buying equipment or starting work."
+    "deadlines": {
+      "CA": {
+        "date": "2026-11-06",
+        "source": 2,
+        "note": "California ranking cutoff for FY2027 funding"
+      }
+    },
+    "next_action": "Contact the USDA Service Center for {county} and ask the NRCS office about EQIP before buying equipment or starting work.",
+    "description": "A USDA conservation program that shares the cost of approved practices such as water-saving irrigation, and provides technical help planning them.",
+    "service_center_url": "https://www.farmers.gov/working-with-us/service-center-locator"
   },
   {
     "id": "fsa-operating-microloan",
@@ -41,7 +72,12 @@
     "kind": "loan",
     "repayable": true,
     "max_amount_usd": 50000,
-    "serves_needs": ["financing", "irrigation_upgrade", "equipment", "expansion"],
+    "serves_needs": [
+      "financing",
+      "irrigation_upgrade",
+      "equipment",
+      "expansion"
+    ],
     "sources": [
       {
         "url": "https://www.fsa.usda.gov/resources/farm-loan-programs/microloans",
@@ -55,13 +91,30 @@
       }
     ],
     "passages": [
-      {"source": 0, "text": "Operating microloans provide up to $50,000 per loan. The limit includes any outstanding FSA direct operating or farm ownership loan balance."},
-      {"source": 1, "text": "Microloans can be used for start-up and annual operating expenses, livestock, equipment, minor farm improvements, hoop houses, irrigation and delivery vehicles."},
-      {"source": 1, "text": "Annual operating expenses are repaid within 12 months or when commodities sell; for equipment and other larger purchases the term does not exceed 7 years."},
-      {"source": 0, "text": "Applicants must be U.S. citizens, non-citizen nationals or qualified aliens, have a satisfactory credit history, show farm management experience or education, operate no larger than a family farm, and be unable to obtain credit elsewhere at reasonable rates and terms."},
-      {"source": 0, "text": "Microloans for annual expenses must be secured by a first lien on farm property or agricultural products worth at least 100 percent of the loan amount."}
+      {
+        "source": 0,
+        "text": "Operating microloans provide up to $50,000 per loan. The limit includes any outstanding FSA direct operating or farm ownership loan balance."
+      },
+      {
+        "source": 1,
+        "text": "Microloans can be used for start-up and annual operating expenses, livestock, equipment, minor farm improvements, hoop houses, irrigation and delivery vehicles."
+      },
+      {
+        "source": 1,
+        "text": "Annual operating expenses are repaid within 12 months or when commodities sell; for equipment and other larger purchases the term does not exceed 7 years."
+      },
+      {
+        "source": 0,
+        "text": "Applicants must be U.S. citizens, non-citizen nationals or qualified aliens, have a satisfactory credit history, show farm management experience or education, operate no larger than a family farm, and be unable to obtain credit elsewhere at reasonable rates and terms."
+      },
+      {
+        "source": 0,
+        "text": "Microloans for annual expenses must be secured by a first lien on farm property or agricultural products worth at least 100 percent of the loan amount."
+      }
     ],
     "deadlines": {},
-    "next_action": "Contact the FSA farm loan officer at the USDA Service Center for {county} to discuss an operating microloan as a backup to grant funding."
+    "next_action": "Contact the FSA farm loan officer at the USDA Service Center for {county} to discuss an operating microloan as a backup to grant funding.",
+    "description": "A small USDA loan of up to $50,000 for farm operating costs, equipment and minor improvements such as irrigation, with simpler paperwork than standard farm loans.",
+    "service_center_url": "https://www.farmers.gov/working-with-us/service-center-locator"
   }
 ]

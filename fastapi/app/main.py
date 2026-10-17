@@ -1,19 +1,24 @@
 import json
+import hashlib
 import logging
 import secrets
+import threading
+import time
 from datetime import date, datetime, timezone
 from pathlib import Path
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy import select
 
 from app.config import Settings
-from app.db import Call, Database, Program
+from app.db import Call, Database, Program, ReportLink
 from app.matching import match_programs
 from app.profile import call_id_of, extract_profile, structured_data, transcript_of
+from app.results_email import delivery_summary, deliver_results, render as render_email, resume_interrupted
+from app.results_sms import delivery_summary as sms_summary, deliver_results as deliver_sms, resume_interrupted as resume_sms
 from app.vapi import fetch_call
 
 log = logging.getLogger('willow')
@@ -57,6 +62,26 @@ def process_call(database: Database, settings: Settings, call_id: str):
         call.matches, call.status, call.error = matches, status, error
     log.info('call_id=%s status=%s profile_source=%s matches=%d', call_id, status,
              profile.source if profile else '-', len(matches))
+    try:
+        deliver_results(database, settings, call_id)
+    except Exception:  # an email problem must never undo a stored matching result
+        log.exception('call_id=%s results email step failed', call_id)
+    try:
+        deliver_sms(database, settings, call_id)
+    except Exception:
+        log.exception('call_id=%s results SMS step failed', call_id)
+
+
+def resume_work(database: Database, settings: Settings):
+    """Background tasks die with the server. On startup, finish calls and emails that were cut off."""
+    with database.transaction() as db:
+        for call in db.scalars(select(Call).where(Call.status.in_(('received', 'processing')))):
+            call.status = 'received'
+        waiting = [c.call_id for c in db.scalars(select(Call).where(Call.status == 'received'))]
+    for call_id in waiting:
+        process_call(database, settings, call_id)
+    resume_interrupted(database, settings)
+    resume_sms(database, settings)
 
 
 def create_app(settings=None):
@@ -67,6 +92,7 @@ def create_app(settings=None):
     app.state.settings = settings
     app.state.db = database = Database(settings.database_url)
     database.sync_programs(Path(settings.programs_path))
+    threading.Thread(target=resume_work, args=(database, settings), daemon=True).start()
     app.add_middleware(CORSMiddleware, allow_origins=[settings.frontend_origin], allow_methods=['GET'],
                        allow_headers=['X-Api-Key'])
 
@@ -139,9 +165,17 @@ def create_app(settings=None):
             call = db.get(Call, call_id)
             if not call:
                 raise HTTPException(404, 'Call not found')
+            email = delivery_summary(database, call_id)
+            sms = sms_summary(database, call_id)
+            profile = dict(call.profile or {}) or None
+            if profile:
+                profile.pop('email_consent_statement', None)  # consent evidence stays server-side
+                profile.pop('sms_consent_statement', None)
             return {'call_id': call.call_id, 'status': call.status, 'error': call.error,
                     'received_at': iso(call.created_at), 'updated_at': iso(call.updated_at),
-                    'profile': call.profile, 'matches': call.matches,
+                    'profile': profile, 'matches': call.matches,
+                    'email_delivery': email and {**email, 'sent_at': iso(email['sent_at']) if email['sent_at'] else None},
+                    'sms_delivery': sms and {**sms, 'submitted_at': iso(sms['submitted_at']) if sms['submitted_at'] else None},
                     'disclaimer': 'Potential matches only. The agency decides eligibility.'}
 
     @app.get('/api/calls/{call_id}', dependencies=[Depends(require_api_key)])
@@ -156,5 +190,18 @@ def create_app(settings=None):
                     'received_at': iso(call.created_at), 'ended_reason': message.get('endedReason'),
                     'transcript_chars': len(transcript_of(message)),
                     'structured_output': structured_data(message), 'profile': call.profile}
+
+    @app.get('/report/{token}', response_class=HTMLResponse)
+    def get_private_report(token: str):
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        with database.transaction() as db:
+            link = db.scalar(select(ReportLink).where(ReportLink.token_hash == digest))
+            if not link or link.expires_at <= time.time():
+                raise HTTPException(404, 'Report link not found')
+            call = db.get(Call, link.call_id)
+            if not call or call.status != 'completed':
+                raise HTTPException(404, 'Report link not found')
+            _, page = render_email(call.profile or {}, call.matches)
+        return HTMLResponse(page, headers={'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'"})
 
     return app
