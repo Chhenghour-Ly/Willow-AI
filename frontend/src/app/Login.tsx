@@ -25,7 +25,7 @@ export function Login({ onLogin }: { onLogin: (code: string) => Promise<void> })
         <img src="/img/mark.png" alt="" width="44" height="49" />
         <div className="case-head">
           <h1>Open your Willow case</h1>
-          <p className="case-sub">Enter the 6-digit code from your Willow results email.</p>
+          <p className="case-sub">Enter the 6-digit code from your Willow results email. Use 000000 to explore a sample case.</p>
         </div>
         <label className="field-label" htmlFor="login-code">Login code</label>
         <input id="login-code" className="code-input" value={code} inputMode="numeric" autoComplete="one-time-code"

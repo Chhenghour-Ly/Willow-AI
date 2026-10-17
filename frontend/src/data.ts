@@ -48,7 +48,8 @@ export interface Me {
 export const SAMPLE = sample as CallResult
 
 export const HOTLINE = import.meta.env.VITE_HOTLINE || '+14086862433'
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+// Empty means same origin: on Vercel that is the api/me.ts function, which reads Supabase directly.
+const API_URL = import.meta.env.VITE_API_URL ?? ''
 
 export function formatPhone(e164: string) {
   const d = e164.replace(/\D/g, '').slice(-10)
@@ -115,16 +116,46 @@ export const LOGIN_ERRORS: Record<string, string> = {
   unavailable: 'Willow is out of reach right now. Try again in a minute.',
 }
 
+/** Always-working demo sign-in: sample farmer and programs, kept in this tab only. No backend needed. */
+export const DEMO_CODE = '000000'
+
+const DEMO_PROFILE: Profile = {
+  ...SAMPLE.profile,
+  farmer_name: 'Dale Hansen', phone: '+15555550100', state: 'IA', county: 'Story County', crops: ['corn', 'soybeans'],
+  total_farm_acres: 300, land_control: 'owned', primary_problem: 'Hail destroyed about 60% of 120 acres of corn',
+  desired_project: 'Replant and recover the lost crop', project_acres: 120, total_project_cost_usd: 72000,
+  assistance_needed_usd: 45000,
+}
+let demoState: FarmerState = { approved: [], edits: {}, confirmed: false }
+
+function demoMe(): Me {
+  return {
+    phone: String(DEMO_PROFILE.phone),
+    calls: [{ call_id: SAMPLE.call_id, status: 'completed', received_at: new Date(SAMPLE.created_at * 1000).toISOString() }],
+    call: { ...SAMPLE, profile: DEMO_PROFILE },
+    state: demoState,
+  }
+}
+
+function demoSave(change: (s: FarmerState) => FarmerState) {
+  demoState = change(demoState)
+  return Promise.resolve(demoState)
+}
+
 export async function loadMe(code: string): Promise<Me> {
+  if (code === DEMO_CODE) return demoMe()
   const me = await api<Omit<Me, 'call'> & { call: (Omit<CallResult, 'matches'> & { matches: ApiMatch[] }) | null }>('/api/me', code)
   return { ...me, call: me.call && { ...me.call, profile: me.call.profile ?? {}, matches: me.call.matches.map(fromApi) } }
 }
 
-export const approveProgram = (code: string, call_id: string, program_id: string) =>
-  api<FarmerState>('/api/me/approvals', code, { call_id, program_id })
+export const approveProgram = (code: string, call_id: string, program_id: string) => code === DEMO_CODE
+  ? demoSave((s) => ({ ...s, approved: s.approved.includes(program_id) ? s.approved : [...s.approved, program_id] }))
+  : api<FarmerState>('/api/me/approvals', code, { call_id, program_id })
 
 export const saveDetails = (code: string, call_id: string, change: { edits?: Record<string, string>; confirmed?: boolean }) =>
-  api<FarmerState>('/api/me/details', code, { call_id, ...change })
+  code === DEMO_CODE
+    ? demoSave((s) => ({ ...s, edits: { ...s.edits, ...change.edits }, confirmed: s.confirmed || !!change.confirmed }))
+    : api<FarmerState>('/api/me/details', code, { call_id, ...change })
 
 export function displayName(match: Match) {
   return match.name.replace(/\s*\(synthetic\)$/, '')

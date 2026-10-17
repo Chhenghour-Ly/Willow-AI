@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { fromApi, money, preview, relativeTime, SAMPLE, showValue, type ApiMatch } from './data'
+import { fromApi, loadMe, money, preview, relativeTime, SAMPLE, showValue, type ApiMatch } from './data'
 
 describe('data helpers', () => {
+  it('opens the complete sample call with demo code', async () => {
+    const me = await loadMe('000000')
+    expect(me.call?.matches).toEqual(SAMPLE.matches)
+    expect(me.call?.profile.story).toBe(SAMPLE.profile.story)
+    expect(me.call?.profile.total_farm_acres).toBe(300)
+  })
   it('formats money', () => {
     expect([money(500), money(20000), money(2_000_000), money(1_500_000)]).toEqual(['$500', '$20k', '$2M', '$1.5M'])
   })

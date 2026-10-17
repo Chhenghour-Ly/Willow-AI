@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
-import { approveProgram, CODE_KEY, HOTLINE, loadMe, saveDetails, type FarmerState, type Match, type Me } from '../data'
+import { approveProgram, CODE_KEY, DEMO_CODE, HOTLINE, loadMe, saveDetails, type FarmerState, type Match, type Me } from '../data'
 import { CallContext, type CallStore } from './store'
 import { CallButton } from './CallButton'
 import { Login } from './Login'
@@ -86,6 +86,7 @@ export function AppShell() {
           <div className="app-title-row">
             <img src="/img/mark.png" alt="" width="28" height="31" />
             <h1 className="app-title">Willow</h1>
+            {code === DEMO_CODE && <small>Sample case</small>}
             <button className="link-btn sign-out" onClick={signOut}>Sign out</button>
           </div>
           <nav className="segmented" aria-label="Sections">

@@ -83,6 +83,16 @@ class Farmer(Base):
     updated_at: Mapped[float] = mapped_column(Float, default=time.time, onupdate=time.time)
 
 
+class LoginAttempt(Base):
+    """A wrong login code. The Vercel functions count recent rows to slow down guessing."""
+    __tablename__ = 'login_attempts'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    at: Mapped[float] = mapped_column(Float, default=time.time, index=True)
+
+
+DEMO_CODE = '000000'  # opens sample data in the app; never issued to a farmer
+
+
 class ReportLink(Base):
     __tablename__ = 'report_links'
     call_id: Mapped[str] = mapped_column(String, primary_key=True)
@@ -97,7 +107,7 @@ def ensure_farmer(db, phone: str) -> Farmer:
         return farmer
     while True:
         code = f'{secrets.randbelow(10**6):06d}'
-        if not db.scalar(select(Farmer).where(Farmer.login_code == code)):
+        if code != DEMO_CODE and not db.scalar(select(Farmer).where(Farmer.login_code == code)):
             break
     farmer = Farmer(phone=phone, login_code=code, state={})
     db.add(farmer)
