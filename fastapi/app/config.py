@@ -26,6 +26,7 @@ class Settings:
     twilio_auth_token: str = ''
     twilio_from_number: str = ''
     report_base_url: str = ''
+    # Comma-separated sites allowed to call the API; the first one is the app link in results emails.
     frontend_origin: str = 'http://localhost:5173'
     programs_path: str = 'fixtures/programs.json'
 
@@ -35,6 +36,9 @@ class Settings:
         load_dotenv()
         return cls(**{name: os.environ[name.upper()] for name in cls.__dataclass_fields__
                       if os.getenv(name.upper()) is not None})
+
+    def origins(self):
+        return [o.strip().rstrip('/') for o in self.frontend_origin.split(',') if o.strip()]
 
     def email_enabled(self):
         return self.email_delivery_enabled.strip().lower() == 'true'

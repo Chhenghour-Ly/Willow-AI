@@ -181,7 +181,8 @@ def deliver_results(database: Database, settings: Settings, call_id: str) -> str
         text_body = page = None
         if status == 'pending':
             farmer = db.get(Farmer, call.phone) if call.phone else None
-            text_body, page = render(p, call.matches, farmer and farmer.login_code, settings.frontend_origin)
+            text_body, page = render(p, call.matches, farmer and farmer.login_code,
+                                     next(iter(settings.origins()), ''))
             if not settings.email_enabled():
                 status, reason = 'dry_run', 'EMAIL_DELIVERY_ENABLED is false; email generated, not sent'
     try:

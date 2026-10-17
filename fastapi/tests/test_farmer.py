@@ -22,6 +22,11 @@ def carolina(call_id, phone='+15555550123'):
     return payload
 
 
+def test_origins_list_puts_email_link_first():
+    settings = Settings(frontend_origin='https://willow-ai.vercel.app/, http://localhost:5173')
+    assert settings.origins() == ['https://willow-ai.vercel.app', 'http://localhost:5173']
+
+
 def test_farmer_code_opens_only_their_profile_and_saves_approvals(tmp_path, monkeypatch):
     sent = []
     monkeypatch.setattr(results_email.httpx, 'post', lambda url, json, headers, timeout: sent.append(json) or
