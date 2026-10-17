@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
-import { approveProgram, HOTLINE, loadMe, saveDetails, type FarmerState, type Match, type Me } from '../data'
+import { approveProgram, CODE_KEY, HOTLINE, loadMe, saveDetails, type FarmerState, type Match, type Me } from '../data'
 import { CallContext, type CallStore } from './store'
 import { CallButton } from './CallButton'
 import { Login } from './Login'
-
-const CODE_KEY = 'willow.code'
 
 function stored(key: string) {
   try { return localStorage.getItem(key) } catch { return null }

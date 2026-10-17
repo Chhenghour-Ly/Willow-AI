@@ -1,5 +1,43 @@
-import { HOTLINE, SAMPLE, formatPhone } from '../data'
+import { useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router'
+import { CODE_KEY, HOTLINE, LOGIN_ERRORS, SAMPLE, formatPhone, loadMe } from '../data'
 import { InboxList, matchRow, type Row } from '../app/InboxList'
+
+/** Already called? Check the code here, then open the farmer app signed in. */
+function HeroLogin() {
+  const navigate = useNavigate()
+  const [code, setCode] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    try {
+      await loadMe(code)
+      try { localStorage.setItem(CODE_KEY, code) } catch { /* private mode: the app asks again */ }
+      navigate('/app')
+    } catch (err) {
+      setError(LOGIN_ERRORS[(err as Error).message] ?? LOGIN_ERRORS.unavailable)
+      setBusy(false)
+    }
+  }
+
+  return (
+    <form className="hero-login" onSubmit={submit}>
+      <label htmlFor="hero-code">Already called? Enter the 6-digit code from your email.</label>
+      <div className="hero-login-row">
+        <input id="hero-code" value={code} inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}"
+          maxLength={6} required placeholder="000000" aria-invalid={error ? true : undefined}
+          aria-describedby={error ? 'hero-code-error' : undefined}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} />
+        <button className="btn btn-dark" disabled={busy || code.length !== 6}>{busy ? 'Opening…' : 'Sign in'}</button>
+      </div>
+      {error && <p id="hero-code-error" className="hero-login-error" role="alert">{error}</p>}
+    </form>
+  )
+}
 
 const STEPS = [
   { img: '/img/step-1.png', title: 'Talk it through', body: 'Call and tell Willow what happened, in your own words. It asks the follow-up questions so you don’t have to know them.' },
@@ -31,6 +69,7 @@ export function Home() {
           <span className="hotline-number">{number}</span>
         </a>
         <p className="hint">Talk the way you’d talk to a neighbor.</p>
+        <HeroLogin />
 
         <div className="hero-art">
           <div className="hero-glow" aria-hidden="true" />

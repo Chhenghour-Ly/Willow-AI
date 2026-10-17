@@ -1,12 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { formatPhone, HOTLINE } from '../data'
+import { formatPhone, HOTLINE, LOGIN_ERRORS as MESSAGES } from '../data'
 import { CallButton } from './CallButton'
-
-const MESSAGES: Record<string, string> = {
-  bad_code: 'That code didn’t work. Check the latest email from Willow.',
-  too_many: 'Too many tries. Wait a few minutes, then try again.',
-  unavailable: 'Willow is out of reach right now. Try again in a minute.',
-}
 
 export function Login({ onLogin }: { onLogin: (code: string) => Promise<void> }) {
   const [code, setCode] = useState('')

@@ -107,6 +107,14 @@ async function api<T>(path: string, code: string, body?: object): Promise<T> {
   return response.json() as Promise<T>
 }
 
+export const CODE_KEY = 'willow.code'
+
+export const LOGIN_ERRORS: Record<string, string> = {
+  bad_code: 'That code didn’t work. Check the latest email from Willow.',
+  too_many: 'Too many tries. Wait a few minutes, then try again.',
+  unavailable: 'Willow is out of reach right now. Try again in a minute.',
+}
+
 export async function loadMe(code: string): Promise<Me> {
   const me = await api<Omit<Me, 'call'> & { call: (Omit<CallResult, 'matches'> & { matches: ApiMatch[] }) | null }>('/api/me', code)
   return { ...me, call: me.call && { ...me.call, profile: me.call.profile ?? {}, matches: me.call.matches.map(fromApi) } }
