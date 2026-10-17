@@ -54,8 +54,11 @@
 .hotline-label::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--leaf); }
 .hotline-number { font-size: clamp(1.75rem, 4vw, 2.25rem); font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .hint { margin-top: 14px; font-size: 0.9375rem; color: var(--muted); }
-.hero-login { display: grid; justify-items: center; gap: 10px; margin: 28px auto 0; max-width: 360px; }
-.hero-login label { font-size: 0.9375rem; color: var(--muted); }
+.hero-login {
+  display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 10px;
+  width: 100%; max-width: 360px; margin: 28px auto 0;
+}
+.hero-login label { font-size: 0.9375rem; color: var(--muted); text-wrap: balance; }
 .hero-login-row { display: flex; gap: 8px; width: 100%; }
 .hero-login input {
   flex: 1; min-width: 0; min-height: 48px; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--radius-sm);
@@ -162,7 +165,12 @@
   .nav-links { display: none; }
   .nav-call { margin-left: auto; }
   .step-grid { grid-template-columns: 1fr; }
-  .hero-art { height: 520px; }
-  .hero-farmer { width: 66%; left: -2%; }
-  .mock-phone { width: 210px; right: -2%; top: 0; }
+  .hotline { display: grid; width: 100%; max-width: 360px; margin-top: 28px; }
+  /* Returning callers get their own card so it doesn't compete with the call button. */
+  .hero-login { margin-top: 24px; padding: 16px; border-radius: var(--radius-md); background: var(--card); }
+  .hero-login input { font-size: 1.125rem; letter-spacing: 0.25em; }
+  .hero-art { height: 440px; margin-top: 40px; }
+  .hero-farmer { width: 58%; left: 0; }
+  .mock-phone { width: 184px; right: 0; top: 8px; border-radius: 34px; padding: 7px; }
+  .mock-screen { border-radius: 27px; }
 }

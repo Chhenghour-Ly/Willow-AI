@@ -26,7 +26,7 @@ function HeroLogin() {
 
   return (
     <form className="hero-login" onSubmit={submit}>
-      <label htmlFor="hero-code">Already called? Enter the 6-digit code from your email.</label>
+      <label htmlFor="hero-code">Already called? Enter the 6‑digit code from your email.</label>
       <div className="hero-login-row">
         <input id="hero-code" value={code} inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}"
           maxLength={6} required placeholder="000000" aria-invalid={error ? true : undefined}
