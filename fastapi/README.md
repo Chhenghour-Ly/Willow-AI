@@ -1,98 +1,81 @@
 # Willow matching API
 
-After a farmer calls Willow, Vapi sends an end-of-call report here. The API
-cleans up the farmer's details, searches the program list, checks every
-eligibility rule, and saves a ranked list of grants, loans, aid and insurance
-options under the call ID for the website to show.
+Vapi end-of-call report → farmer profile → retrieval over official USDA program
+text → requirement checks → results API. Matches are **potential fits, not
+eligibility decisions**; the agency decides.
 
-**Program data is synthetic.** Every program in `fixtures/programs.json` is
-made up for the demo and marked `"synthetic": true`. Do not show results as real
-advice until real USDA data replaces it.
+## Pipeline
 
-## How it works
+1. `POST /webhooks/vapi` checks the secret (`X-Vapi-Secret` or `Authorization: Bearer`).
+   Only `message.type == "end-of-call-report"` is processed; every other event gets
+   `{"status": "ignored"}`. The call is stored as `received` and acknowledged at once.
+   A repeat delivery for the same `message.call.id` returns the stored status.
+2. In the background (`app/main.py: process_call`), `app/profile.py` reads the
+   structured output from `message.artifact.structuredOutputs[<id>].result`
+   (also `message.call.artifact…` and the legacy `analysis.structuredData`).
+   `"unknown"` and `0` become `null`; enums outside the schema become `null`;
+   `needs` keeps only the allowed categories. Nothing is inferred from the transcript.
+3. If the webhook had no structured output and `VAPI_API_KEY` is set,
+   `app/vapi.py` fetches `GET https://api.vapi.ai/call/{id}` with backoff
+   (`VAPI_RETRY_DELAYS`, default 2,4,8,16 s).
+4. `app/matching.py` retrieves the most relevant passages from
+   `fixtures/programs.json` (official sources, verified 2026-10-17) and checks each
+   requirement: **reasons** (what fits), **obstacles** (conflicts with what the farmer
+   said), **missing_requirements** (unknown, to confirm). Every item carries a
+   `source_url` where one applies.
+5. Status: `received` → `processing` → `completed` | `needs_information` (no state or
+   needs captured) | `failed`.
 
-1. `POST /webhooks/vapi` receives Vapi's `end-of-call-report`. Other event types
-   are ignored.
-2. `app/profile.py` reads `message.analysis.structuredData` and cleans loose
-   values ("about 120 acres", "Iowa", "180k", "yes"). Anything unclear becomes
-   unknown; nothing is guessed.
-3. `app/matching.py` ranks programs by how well their text fits the farmer's
-   story, then checks each rule (state, crop, damage type, loss %, income, farm
-   size, insurance, years farming, organic, deadline) as met, blocked or unknown.
-4. Status: any blocked rule = `not_eligible`, any unknown = `possible` (with the
-   follow-up questions), otherwise `likely`. Results are sorted by status, then
-   relevance, then amount.
-5. The profile and matches are saved under the call ID. Replaying the same call
-   returns the saved result.
-6. `GET /api/matches/{call_id}` returns `{call_id, created_at, profile, matches}`.
+Programs: EQIP (NRCS) and FSA Operating Microloan. `fit_status` is
+`potential_fit`, `needs_information` or `unlikely_fit` (only when something the farmer
+said conflicts with a rule). `relevance` scores retrieved text, not eligibility.
 
-## Fields expected from Vapi
+## API
 
-Configure these in the assistant's structured data. Free-form answers are fine.
+| Endpoint | Auth | Returns |
+| --- | --- | --- |
+| `POST /webhooks/vapi` | `X-Vapi-Secret` | `{status, call_id}` |
+| `GET /api/matches/{call_id}` | `X-Api-Key` | `{status, profile, matches[...]}` |
+| `GET /api/calls/{call_id}` | `X-Api-Key` | receipt check: status, transcript length, raw structured output |
 
-| Field | Example |
-| --- | --- |
-| `farmer_name` | Dale Hansen |
-| `state` | Iowa |
-| `county` | Story County |
-| `crops` | corn and some soybeans |
-| `damage_type` | hail storm |
-| `acres_damaged` | about 120 acres |
-| `total_acres` | 300 |
-| `loss_percent` | 60% |
-| `loss_date` | 2026-10-03 (ISO date) |
-| `annual_income` | $180,000 |
-| `has_crop_insurance` | yes |
-| `years_farming` | 22 |
-| `is_organic` | no |
+Each match: `program_id, program_name, fit_status, reasons, obstacles,
+missing_requirements, application_deadline, official_source_urls, evidence,
+next_action`.
 
-The caller's number comes from `message.call.customer.number`. The analysis
-summary and transcript are used as the story for search.
-`fixtures/sample-end-of-call.json` is our own sample, not a captured Vapi event.
-Update `app/profile.py` once a real payload is available.
+## Structured output schema (Vapi)
 
-## Local setup (PowerShell, Python 3.12+)
+`farmer_name, state, county, crops[], primary_problem, desired_project, needs[],
+land_control (owned|leased|other|unknown), project_status
+(not_started|in_progress|completed|unknown), project_acres, total_farm_acres,
+total_project_cost_usd, assistance_needed_usd, funding_preference
+(nonrepayable_only|prefer_nonrepayable_open_to_loan|loan_ok|unknown), call_summary`.
+Optional: `irrigated_years_of_last_5` (EQIP irrigation history rule).
+
+## Run locally (PowerShell, from this folder)
 
 ```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
+python -m venv .venv; .venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-Copy-Item .env.example .env
-python -c "from pathlib import Path; import secrets; p=Path('.env'); p.write_text(p.read_text().replace('WEBHOOK_SECRET=','WEBHOOK_SECRET='+secrets.token_urlsafe(32),1))"
-python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
-```
-
-Send the sample call:
-
-```powershell
-python -c "from dotenv import load_dotenv; load_dotenv(); import os,json,httpx; from pathlib import Path; r=httpx.post('http://127.0.0.1:8000/webhooks/vapi',headers={'X-Vapi-Secret':os.environ['WEBHOOK_SECRET']},json=json.loads(Path('fixtures/sample-end-of-call.json').read_text())); print(r.json())"
-curl http://127.0.0.1:8000/api/matches/sample-call-0001
-```
-
-Programs are loaded from `PROGRAMS_PATH` into the `programs` table on every
-start, so editing the JSON and restarting is enough.
-
-## Supabase
-
-Set `DATABASE_URL` to the Supabase Postgres connection string. Tables are
-created on start, and row-level security is turned on with no policies, so the
-Supabase public API cannot read them; only this backend can.
-
-## Vapi setup
-
-Point the assistant's server URL at `https://<host>/webhooks/vapi` and set the
-same secret as `WEBHOOK_SECRET`, either as the server secret (`X-Vapi-Secret`
-header) or as a Bearer token credential. Without a secret the webhook returns 503.
-
-## Tests
-
-```powershell
+Copy-Item .env.example .env   # fill WEBHOOK_SECRET and API_KEY (random 32+ chars)
 python -m pytest -q
+python -m uvicorn app.main:create_app --factory --port 8000
+ngrok http 8000               # Vapi Server URL: https://<ngrok>/webhooks/vapi
 ```
+
+Inspect calls from the terminal:
+
+```powershell
+python -m app.show                     # list calls and status
+python -m app.show <call_id>           # structured output, profile, cited matches
+python -m app.show <call_id> --rematch # re-run with current code
+```
+
+Fixtures: `carolina-end-of-call.json` (simulated full call),
+`recorded-with-structured-outputs.json` and `recorded-no-structured-outputs.json`
+(sanitized real Vapi payloads: phone replaced, URLs and costs removed).
 
 ## Known limits
 
-- Anyone with a call ID can read its results. Call IDs are long random values,
-  which is acceptable for the hackathon demo; add farmer sign-in before real use.
-- Search is keyword-based. Meaning-based search can be added later.
-- Tables are created with SQLAlchemy `create_all`; there are no migrations.
+- One shared `API_KEY` protects reads; farmer-facing pages need per-farmer sign-in.
+- Retrieval is keyword-based over the stored official passages.
+- Tables are created with `create_all`; no migrations.

@@ -1,0 +1,34 @@
+{
+  "message": {
+    "type": "end-of-call-report",
+    "endedReason": "customer-ended-call",
+    "call": {"id": "sim-carolina-0001", "customer": {"number": "+15555550123"}},
+    "artifact": {
+      "transcript": "AI: Thanks for calling Willow. May I have your name?\nUser: Carolina Martinez.\nAI: What's happening on your farm?\nUser: I grow tomatoes and squash in Fresno County, California. Our well water keeps dropping and I want to upgrade irrigation to save water.\nAI: How big is the farm and the project?\nUser: Twenty acres total, the project would cover fifteen. I lease the land. We've irrigated four of the last five years.\nAI: Have you started the work, and what would it cost?\nUser: Not started. About twenty-four thousand dollars, and I'd need around twenty thousand in help.\nAI: Would you want help you don't repay, or is a loan okay?\nUser: I'd prefer not to repay, but I'd consider a loan.",
+      "messages": [],
+      "structuredOutputs": {
+        "d1b9c721-c61d-4875-bffd-d22888f69f54": {
+          "name": "FarmBridge Farmer Profile",
+          "result": {
+            "farmer_name": "Carolina Martinez",
+            "state": "California",
+            "county": "Fresno County",
+            "crops": ["tomatoes", "squash"],
+            "primary_problem": "declining well water supply",
+            "desired_project": "upgrade irrigation to conserve water",
+            "needs": ["irrigation_upgrade", "water_conservation", "financing"],
+            "land_control": "leased",
+            "project_status": "not_started",
+            "project_acres": 15,
+            "total_farm_acres": 20,
+            "total_project_cost_usd": 24000,
+            "assistance_needed_usd": 20000,
+            "funding_preference": "prefer_nonrepayable_open_to_loan",
+            "irrigated_years_of_last_5": 4,
+            "call_summary": "Carolina Martinez grows tomatoes and squash on 20 leased acres in Fresno County, California. Her well supply is declining and she wants a $24,000 water-saving irrigation upgrade on 15 acres, needing about $20,000. She prefers non-repayable help but would consider a loan. Work has not started."
+          }
+        }
+      }
+    }
+  }
+}

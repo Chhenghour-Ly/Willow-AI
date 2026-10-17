@@ -1,0 +1,209 @@
+{
+  "message": {
+    "type": "end-of-call-report",
+    "endedReason": "assistant-ended-call",
+    "summary": "",
+    "call": {
+      "id": "recorded-2186",
+      "type": "inboundPhoneCall",
+      "customer": {
+        "number": "+15555550199"
+      }
+    },
+    "customer": {
+      "number": "+15555550199"
+    },
+    "artifact": {
+      "transcript": "AI: Thank you for calling. My name is Willow, and I'm your farming assistant. Before we get started, may I have your name, please?\nUser: Hi, Willow. My name is Brandon.\nAI: Nice to meet you, Brandon. Um, what's happening on your farm, and what. Kind of help are you hoping to find?\nUser: So, um, I rode tomatoes and a squash in Fresno County, California.\nAI: Thanks, Brandon.\nUser: And.\nAI: I'm listening, Brandon. What's been going on with your tomatoes and squash?\nUser: Um, so\u2014\nAI: Go ahead.\nUser: Like, basically.\nAI: Take your time, Brandon.\nUser: I need help operating my irrigation system.\nAI: Are you looking for help paying day-to-day irrigation expenses, or do you want to repair or upgrade the system?\nUser: I want to upgrade the system.\nAI: What kind of irrigation upgrade are you planning?\nUser: Um, I. Let me see.\nAI: Take your time. No rush, Brandon. What would you like the upgraded system to do better?\nUser: So my well's has been. Running well. So that.\nAI: It sounds like the.\nUser: 's why I want to upgrade. My irrigation system that I really can't afford it.\nAI: That's a hard spot, Brandon. Are you hoping for assistance you wouldn't have to repay, or would you consider a loan too?\nUser: Yeah, I'd prefer some help. I don't have to repay, but I can see their loan.\nAI: There's a USDA program called EQIP that helps pay for a particular. Conservation. Improvements, including service. Water. Saving irrigation upgrades, so it looks more aligned with your preference. Have you already started or purchased anything for the upgrade?\nUser: No, I haven't started anything.\nAI: That's helpful, since conservation. Projects. Generally. Need. USDA review before work begins. Do you own the land? Or lease it?\nUser: I'm leasing the farmland.\nAI: Leasing doesn't automatically rule you out, Brandon. But your lease must show enough control of the land for the contract period. EQIP looks most promising because you're planning an irrigation upgrade and prefer help you won't repay. Contact NRCS, the USDA Conservation Office that handles the program. Before. Buying equipment or starting work. And ask them to review your lease and irrigation plan. Does that give you a good place to start, or is there something you'd like me to clarify?\nUser: No, that's not how I need.\nAI: I may have misunderstood you, Brandon. What kind of help do you need, with the irrigation upgrade?\nUser: Oh, no. I mean, that's all for today.\nAI: Glad we could find a place to start. Thanks. For calling Willow AI. And take care.\nUser: Yep. Please end the call.\nAI: Glad we could find a place to start. Thanks. For calling Willow AI. Take care.\n",
+      "messages": [
+        {
+          "role": "bot",
+          "message": "Thank you for calling. My name is Willow, and I'm your farming assistant. Before we get started, may I have your name, please?",
+          "time": 1792241132031
+        },
+        {
+          "role": "user",
+          "message": "Hi, Willow. My name is Brandon.",
+          "time": 1792241141010
+        },
+        {
+          "role": "bot",
+          "message": "Nice to meet you, Brandon. Um, what's happening on your farm, and what. Kind of help are you hoping to find?",
+          "time": 1792241144451
+        },
+        {
+          "role": "user",
+          "message": "So, um, I rode tomatoes and a squash in Fresno County, California.",
+          "time": 1792241153550
+        },
+        {
+          "role": "bot",
+          "message": "Thanks, Brandon.",
+          "time": 1792241161251
+        },
+        {
+          "role": "user",
+          "message": "And.",
+          "time": 1792241161350
+        },
+        {
+          "role": "bot",
+          "message": "I'm listening, Brandon. What's been going on with your tomatoes and squash?",
+          "time": 1792241163651
+        },
+        {
+          "role": "user",
+          "message": "Um, so\u2014",
+          "time": 1792241171610
+        },
+        {
+          "role": "bot",
+          "message": "Go ahead.",
+          "time": 1792241174391
+        },
+        {
+          "role": "user",
+          "message": "Like, basically.",
+          "time": 1792241174490
+        },
+        {
+          "role": "bot",
+          "message": "Take your time, Brandon.",
+          "time": 1792241176491
+        },
+        {
+          "role": "user",
+          "message": "I need help operating my irrigation system.",
+          "time": 1792241177130
+        },
+        {
+          "role": "bot",
+          "message": "Are you looking for help paying day-to-day irrigation expenses, or do you want to repair or upgrade the system?",
+          "time": 1792241182851
+        },
+        {
+          "role": "user",
+          "message": "I want to upgrade the system.",
+          "time": 1792241189910
+        },
+        {
+          "role": "bot",
+          "message": "What kind of irrigation upgrade are you planning?",
+          "time": 1792241192691
+        },
+        {
+          "role": "user",
+          "message": "Um, I. Let me see.",
+          "time": 1792241199930
+        },
+        {
+          "role": "bot",
+          "message": "Take your time. No rush, Brandon. What would you like the upgraded system to do better?",
+          "time": 1792241202771
+        },
+        {
+          "role": "user",
+          "message": "So my well's has been. Running well. So that.",
+          "time": 1792241211510
+        },
+        {
+          "role": "bot",
+          "message": "It sounds like the.",
+          "time": 1792241215791
+        },
+        {
+          "role": "user",
+          "message": "'s why I want to upgrade. My irrigation system that I really can't afford it.",
+          "time": 1792241216730
+        },
+        {
+          "role": "bot",
+          "message": "That's a hard spot, Brandon. Are you hoping for assistance you wouldn't have to repay, or would you consider a loan too?",
+          "time": 1792241223111
+        },
+        {
+          "role": "user",
+          "message": "Yeah, I'd prefer some help. I don't have to repay, but I can see their loan.",
+          "time": 1792241231250
+        },
+        {
+          "role": "bot",
+          "message": "There's a USDA program called EQIP that helps pay for a particular. Conservation. Improvements, including service. Water. Saving irrigation upgrades, so it looks more aligned with your preference. Have you already started or purchased anything for the upgrade?",
+          "time": 1792241240751
+        },
+        {
+          "role": "user",
+          "message": "No, I haven't started anything.",
+          "time": 1792241257890
+        },
+        {
+          "role": "bot",
+          "message": "That's helpful, since conservation. Projects. Generally. Need. USDA review before work begins. Do you own the land? Or lease it?",
+          "time": 1792241260851
+        },
+        {
+          "role": "user",
+          "message": "I'm leasing the farmland.",
+          "time": 1792241271570
+        },
+        {
+          "role": "bot",
+          "message": "Leasing doesn't automatically rule you out, Brandon. But your lease must show enough control of the land for the contract period. EQIP looks most promising because you're planning an irrigation upgrade and prefer help you won't repay. Contact NRCS, the USDA Conservation Office that handles the program. Before. Buying equipment or starting work. And ask them to review your lease and irrigation plan. Does that give you a good place to start, or is there something you'd like me to clarify?",
+          "time": 1792241277111
+        },
+        {
+          "role": "user",
+          "message": "No, that's not how I need.",
+          "time": 1792241311950
+        },
+        {
+          "role": "bot",
+          "message": "I may have misunderstood you, Brandon. What kind of help do you need, with the irrigation upgrade?",
+          "time": 1792241315451
+        },
+        {
+          "role": "user",
+          "message": "Oh, no. I mean, that's all for today.",
+          "time": 1792241322390
+        },
+        {
+          "role": "bot",
+          "message": "Glad we could find a place to start. Thanks. For calling Willow AI. And take care.",
+          "time": 1792241326491
+        },
+        {
+          "role": "user",
+          "message": "Yep. Please end the call.",
+          "time": 1792241334090
+        },
+        {
+          "role": "bot",
+          "message": "Glad we could find a place to start. Thanks. For calling Willow AI. Take care.",
+          "time": 1792241337351
+        }
+      ],
+      "structuredOutputs": {
+        "d1b9c721-c61d-4875-bffd-d22888f69f54": {
+          "name": "FarmBridge Farmer Profile",
+          "result": {
+            "call_summary": "Brandon grows tomatoes and squash in Fresno County, California, and needs to upgrade his irrigation system because his well is not running well, but he cannot afford it. He prefers non-repayable assistance but is open to a loan. He has not started the project yet and leases his farmland. The next step is for him to contact NRCS to review his lease and irrigation plan before starting any work.",
+            "assistance_needed_usd": 0,
+            "county": "Fresno County",
+            "crops": "tomatoes, squash",
+            "desired_project": "upgrade the irrigation system",
+            "farmer_name": "Brandon",
+            "funding_preference": "prefer_nonrepayable_open_to_loan",
+            "land_control": "leased",
+            "needs": "irrigation_upgrade, financing",
+            "primary_problem": "inability to afford irrigation system upgrade due to well issues",
+            "project_acres": 0,
+            "project_status": "not_started",
+            "state": "California",
+            "total_farm_acres": 0,
+            "total_project_cost_usd": 0
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "message": {
+    "type": "end-of-call-report",
+    "endedReason": "customer-ended-call",
+    "summary": "",
+    "call": {
+      "id": "recorded-0f20",
+      "type": "inboundPhoneCall",
+      "customer": {
+        "number": "+15555550199"
+      }
+    },
+    "customer": {
+      "number": "+15555550199"
+    },
+    "artifact": {
+      "transcript": "AI: Thank you for calling. My name is Willow. And I'm your farming assistant. Before we get started, may I have your name, please?\nUser: Hi Willow, my name is Min.\nAI: Hi Minh, nice to meet you. What's happening on your farm, and what are you hoping to get help with?\nUser: So I grow tomatoes in the squash, in Fresno County, California. And my wells. Has been running low, and. I want to upgrade my irrigation system, but I really can't afford it.\nAI: That sounds a bit stressful. Minh, are you hoping mainly for assistance? You wouldn't have to repay, or. Would you consider a loan too?\nUser: So, um, I prefer a system. I don't have to repay, but I consider a loan.\nAI: There's a USDA program called EQIP that helps farmers pay for approved. Conservation. Improvements, including certain water-saving irrigation projects. Since you prefer help, you won't repay; it looks more aligned than the repayable. FSA microloan. But have you started the irrigation work yet?\nUser: No, I haven't started anything.\nAI: That helps, since approved conservation work generally shouldn't begin before. USDA review. EQIP looks worth exploring for your water-saving irrigation upgrade. Your local NRCS, the USDA Conservation Office that handles the program, will. Need to review the plan and. A repayable. FSA microloan. Could be a backup if needed. Contact the Fresno County USDA Conservation Office before. Buying equipment or starting work. Does that give you a good place to start, or is there something you'd like me to clarify?\nUser: Nope, that's all I need. Thank you.\nAI: Glad we could find a place to start. Thanks for calling Willow AI. And take care.\n",
+      "messages": [
+        {
+          "role": "bot",
+          "message": "Thank you for calling. My name is Willow. And I'm your farming assistant. Before we get started, may I have your name, please?",
+          "time": 1792240342429
+        },
+        {
+          "role": "user",
+          "message": "Hi Willow, my name is Min.",
+          "time": 1792240352546
+        },
+        {
+          "role": "bot",
+          "message": "Hi Minh, nice to meet you. What's happening on your farm, and what are you hoping to get help with?",
+          "time": 1792240355869
+        },
+        {
+          "role": "user",
+          "message": "So I grow tomatoes in the squash, in Fresno County, California. And my wells. Has been running low, and. I want to upgrade my irrigation system, but I really can't afford it.",
+          "time": 1792240363166
+        },
+        {
+          "role": "bot",
+          "message": "That sounds a bit stressful. Minh, are you hoping mainly for assistance? You wouldn't have to repay, or. Would you consider a loan too?",
+          "time": 1792240377709
+        },
+        {
+          "role": "user",
+          "message": "So, um, I prefer a system. I don't have to repay, but I consider a loan.",
+          "time": 1792240386866
+        },
+        {
+          "role": "bot",
+          "message": "There's a USDA program called EQIP that helps farmers pay for approved. Conservation. Improvements, including certain water-saving irrigation projects. Since you prefer help, you won't repay; it looks more aligned than the repayable. FSA microloan. But have you started the irrigation work yet?",
+          "time": 1792240397089
+        },
+        {
+          "role": "user",
+          "message": "No, I haven't started anything.",
+          "time": 1792240419746
+        },
+        {
+          "role": "bot",
+          "message": "That helps, since approved conservation work generally shouldn't begin before. USDA review. EQIP looks worth exploring for your water-saving irrigation upgrade. Your local NRCS, the USDA Conservation Office that handles the program, will. Need to review the plan and. A repayable. FSA microloan. Could be a backup if needed. Contact the Fresno County USDA Conservation Office before. Buying equipment or starting work. Does that give you a good place to start, or is there something you'd like me to clarify?",
+          "time": 1792240422709
+        },
+        {
+          "role": "user",
+          "message": "Nope, that's all I need. Thank you.",
+          "time": 1792240458506
+        },
+        {
+          "role": "bot",
+          "message": "Glad we could find a place to start. Thanks for calling Willow AI. And take care.",
+          "time": 1792240461049
+        }
+      ]
+    }
+  }
+}

@@ -20,11 +20,15 @@ class Program(Base):
 class Call(Base):
     __tablename__ = 'calls'
     call_id: Mapped[str] = mapped_column(String, primary_key=True)
+    # received -> processing -> completed | needs_information | failed
+    status: Mapped[str] = mapped_column(String, default='received')
+    error: Mapped[str | None] = mapped_column(String, nullable=True)
     phone: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     payload: Mapped[dict] = mapped_column(JSON)
-    profile: Mapped[dict] = mapped_column(JSON)
-    matches: Mapped[list] = mapped_column(JSON)
+    profile: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    matches: Mapped[list] = mapped_column(JSON, default=list)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
+    updated_at: Mapped[float] = mapped_column(Float, default=time.time, onupdate=time.time)
 
 
 def engine_url(url):
@@ -53,6 +57,8 @@ class Database:
             yield session
 
     def sync_programs(self, path: Path):
+        programs = json.loads(path.read_text(encoding='utf-8'))
         with self.transaction() as db:
-            for program in json.loads(path.read_text(encoding='utf-8')):
+            db.query(Program).filter(Program.id.not_in([p['id'] for p in programs])).delete()
+            for program in programs:
                 db.merge(Program(id=program['id'], data=program))

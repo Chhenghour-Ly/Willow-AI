@@ -5,70 +5,68 @@ from pathlib import Path
 from app.matching import match_programs
 from app.profile import FarmerProfile, extract_profile
 
-PROGRAMS = json.loads(Path('fixtures/programs.json').read_text())
+PROGRAMS = json.loads(Path('fixtures/programs.json').read_text(encoding='utf-8'))
 TODAY = date(2026, 10, 17)
-RANK = {'likely': 0, 'possible': 1, 'not_eligible': 2}
 
 
-def run(profile):
-    ranked = match_programs(profile, PROGRAMS, TODAY)
-    return {m.program_id: m for m in ranked}, ranked
+def carolina():
+    return extract_profile(json.loads(Path('fixtures/carolina-end-of-call.json').read_text(encoding='utf-8')))
 
 
-def iowa_hail():
-    return extract_profile(json.loads(Path('fixtures/sample-end-of-call.json').read_text()))
+def run(profile, today=TODAY):
+    ranked = match_programs(profile, PROGRAMS, today)
+    return {m['program_id']: m for m in ranked}, ranked
 
 
-def test_iowa_hail_corn_top_matches():
-    by_id, ranked = run(iowa_hail())
-    assert ranked[0].status == 'likely'
-    assert {'syn-iowa-recovery', 'syn-ecap'} <= {m.program_id for m in ranked[:3]}
-    assert by_id['syn-crop-insurance-claim'].status == 'likely'
-    assert by_id['syn-nebraska-drought'].status == 'not_eligible'
+def texts(items):
+    return ' | '.join(i['text'] for i in items)
 
 
-def test_results_ordered_by_status():
-    _, ranked = run(iowa_hail())
-    assert [RANK[m.status] for m in ranked] == sorted(RANK[m.status] for m in ranked)
+def test_carolina_both_programs_investigated_with_citations():
+    by_id, ranked = run(carolina())
+    assert [m['program_id'] for m in ranked] == ['eqip', 'fsa-operating-microloan']  # prefers non-repayable
+    for m in ranked:
+        assert m['fit_status'] == 'potential_fit'  # never "eligible"
+        assert m['reasons'] and m['missing_requirements'] and m['official_source_urls'] and m['evidence']
+        assert all(i['source_url'].startswith('https://') for i in m['missing_requirements'] if i['source_url'])
+    eqip = by_id['eqip']
+    assert 'irrigated 4 of the last 5 years' in texts(eqip['reasons'])
+    assert 'lease covering the full EQIP contract term' in texts(eqip['missing_requirements'])
+    assert eqip['application_deadline']['date'] == '2026-11-06'
+    assert 'Fresno County' in eqip['next_action']
+    microloan = by_id['fsa-operating-microloan']
+    assert '$20,000 you need is within the $50,000' in texts(microloan['reasons'])
+    assert 'Willow does not assess it' in texts(microloan['missing_requirements'])
 
 
-def test_passed_deadline_blocks():
-    by_id, _ = run(iowa_hail())
-    m = by_id['syn-hail-replant']
-    assert m.status == 'not_eligible'
-    assert any('Deadline passed' in reason for reason in m.blocked)
+def test_missing_profile_means_needs_information_not_ineligible():
+    by_id, _ = run(FarmerProfile(call_id='c'))
+    assert {m['fit_status'] for m in by_id.values()} == {'needs_information'}
+    assert all(not m['obstacles'] for m in by_id.values())
 
 
-def test_income_over_limit_blocks_with_reason():
-    profile = iowa_hail().model_copy(update={'annual_income': 2_000_000})
-    by_id, _ = run(profile)
-    assert by_id['syn-ecap'].status == 'not_eligible'
-    assert 'Income over the $900,000 limit' in by_id['syn-ecap'].blocked
+def test_partial_profile_asks_for_what_is_missing():
+    by_id, _ = run(FarmerProfile(call_id='c', state='CA', needs=['irrigation_upgrade']))
+    assert by_id['eqip']['fit_status'] == 'potential_fit'
+    assert 'Do you own or lease the land' in texts(by_id['eqip']['missing_requirements'])
+    assert 'Have you started the project' in texts(by_id['eqip']['missing_requirements'])
+    assert 'How much money do you need' in texts(by_id['fsa-operating-microloan']['missing_requirements'])
 
 
-def test_missing_facts_become_questions():
-    by_id, _ = run(FarmerProfile(call_id='c', damage_type='hail'))
-    m = by_id['syn-ecap']
-    assert m.status == 'possible'
-    assert 'About what percent of the crop was lost?' in m.unknown
-    assert 'What is your yearly farm income?' in m.unknown
-    assert m.explanation.startswith('Could fit')
+def test_stated_conflicts_become_unlikely():
+    p = carolina().model_copy(update={'funding_preference': 'nonrepayable_only', 'project_status': 'completed'})
+    by_id, _ = run(p)
+    assert by_id['fsa-operating-microloan']['fit_status'] == 'unlikely_fit'
+    assert by_id['eqip']['fit_status'] == 'unlikely_fit'
 
 
-def test_no_insurance_blocks_claim():
-    by_id, _ = run(iowa_hail().model_copy(update={'has_crop_insurance': False}))
-    assert 'Requires a crop insurance policy' in by_id['syn-crop-insurance-claim'].blocked
+def test_loan_amount_over_cap_is_an_obstacle():
+    by_id, _ = run(carolina().model_copy(update={'assistance_needed_usd': 80000}))
+    assert 'above the $50,000 microloan limit' in texts(by_id['fsa-operating-microloan']['obstacles'])
 
 
-def test_crop_groups_match_specific_crops():
-    profile = FarmerProfile(call_id='c', state='CA', crops=['apples'], damage_type='freeze', loss_percent=40,
-                            annual_income=100000, total_acres=40)
-    by_id, _ = run(profile)
-    assert by_id['syn-freeze-fruit'].status == 'likely'
-    assert by_id['syn-ecap'].status != 'not_eligible'
-
-
-def test_every_match_marked_synthetic():
-    _, ranked = run(iowa_hail())
-    assert len(ranked) == len(PROGRAMS)
-    assert all(m.synthetic for m in ranked)
+def test_deadline_hidden_after_cutoff_and_outside_state():
+    by_id, _ = run(carolina(), today=date(2026, 12, 1))
+    assert by_id['eqip']['application_deadline'] is None
+    by_id, _ = run(carolina().model_copy(update={'state': 'IA'}))
+    assert by_id['eqip']['application_deadline'] is None
