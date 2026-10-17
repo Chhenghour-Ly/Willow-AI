@@ -94,7 +94,8 @@ async function api<T>(path: string, code: string, body?: object): Promise<T> {
   try {
     response = await fetch(`${API_URL}${path}`, {
       method: body ? 'POST' : 'GET',
-      headers: { 'X-Farmer-Code': code, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      // ngrok's free tunnel answers browsers with a warning page unless this header is present.
+      headers: { 'X-Farmer-Code': code, 'ngrok-skip-browser-warning': '1', ...(body ? { 'Content-Type': 'application/json' } : {}) },
       body: body ? JSON.stringify(body) : undefined,
     })
   } catch {

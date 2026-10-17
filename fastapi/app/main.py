@@ -127,7 +127,7 @@ def create_app(settings=None):
     database.sync_programs(Path(settings.programs_path))
     threading.Thread(target=resume_work, args=(database, settings), daemon=True).start()
     app.add_middleware(CORSMiddleware, allow_origins=[settings.frontend_origin], allow_methods=['GET', 'POST'],
-                       allow_headers=['X-Api-Key', 'X-Farmer-Code', 'Content-Type'])
+                       allow_headers=['X-Api-Key', 'X-Farmer-Code', 'Content-Type', 'ngrok-skip-browser-warning'])
 
     @app.middleware('http')
     async def private_responses(request, call_next):
