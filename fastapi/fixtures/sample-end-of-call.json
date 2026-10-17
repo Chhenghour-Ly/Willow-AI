@@ -1,0 +1,31 @@
+{
+  "message": {
+    "type": "end-of-call-report",
+    "endedReason": "customer-ended-call",
+    "call": {
+      "id": "sample-call-0001",
+      "customer": {"number": "+15555550100"}
+    },
+    "artifact": {
+      "transcript": "AI: Hi, this is Willow. How can I help? User: Hail came through last week and tore up most of my corn. About 120 acres out of 300, maybe 60 percent gone. I'm in Story County, Iowa. I do have crop insurance."
+    },
+    "analysis": {
+      "summary": "Farmer in Story County, Iowa reports hail destroyed about 60% of 120 acres of corn. Has crop insurance.",
+      "structuredData": {
+        "farmer_name": "Dale Hansen",
+        "state": "Iowa",
+        "county": "Story County",
+        "crops": "corn and some soybeans",
+        "damage_type": "hail storm",
+        "acres_damaged": "about 120 acres",
+        "total_acres": "300",
+        "loss_percent": "60%",
+        "loss_date": "2026-10-03",
+        "annual_income": "$180,000",
+        "has_crop_insurance": "yes",
+        "years_farming": "22",
+        "is_organic": "no"
+      }
+    }
+  }
+}

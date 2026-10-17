@@ -14,3 +14,10 @@ personal-data/
 *.log
 # Keep project notes and assistant instructions local.
 *.[mM][dD]
+!README.md
+.claude/
+*.pem
+*.key
+*.p12
+secrets/
+credentials*.json
