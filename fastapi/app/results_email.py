@@ -19,7 +19,7 @@ from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 
 from app.config import Settings
-from app.db import Call, Database, EmailDelivery
+from app.db import Call, Database, EmailDelivery, Farmer
 
 log = logging.getLogger('willow')
 SUBJECT = 'Your Willow Assistance Results'
@@ -32,12 +32,12 @@ LABELS = {'irrigation_upgrade': 'irrigation upgrade', 'water_conservation': 'wat
 
 # ---------- deciding ----------
 
-def decide(call: Call) -> tuple[str, str | None]:
+def decide(call: Call, override_to: str = '') -> tuple[str, str | None]:
     """(status, reason) before any send. 'pending' means an email may be prepared for this call."""
     p = call.profile or {}
     if p.get('deep_matching_requested') is not True or p.get('email_delivery_consent') is not True:
         return 'not_requested', 'no explicit request for deeper matching and email consent'
-    if not p.get('results_email'):
+    if not (override_to or p.get('results_email')):
         return 'skipped', 'no confirmed, valid email address'
     if call.status != 'completed':
         return 'skipped', f'matching status is {call.status}; no report is sent until matching completes'
@@ -54,7 +54,7 @@ def farm_summary(p: dict) -> list[tuple[str, str]]:
     return [(k, v) for k, v in rows if v]
 
 
-def sections(p: dict, matches: list[dict]) -> list[dict]:
+def sections(p: dict, matches: list[dict], login_code: str | None = None, app_url: str = '') -> list[dict]:
     """The email as structured blocks; both the HTML and the text version are rendered from this."""
     fits = [m for m in matches if m['fit_status'] == 'potential_fit']
     out = [{'kind': 'intro', 'lines': [
@@ -80,15 +80,21 @@ def sections(p: dict, matches: list[dict]) -> list[dict]:
     steps = [m['next_action'] for m in fits[:2]] or ['Contact your local USDA Service Center about your situation.']
     out.append({'kind': 'steps', 'title': 'Getting ready to apply', 'lines': steps,
                 'link': ('Find your USDA Service Center', SERVICE_CENTER)})
+    if login_code and app_url:
+        out.append({'kind': 'steps', 'title': 'Review and approve in the Willow app', 'lines': [
+            f'Your Willow login code: {login_code}',
+            'Open the app, enter the code, check your details and approve the programs you want.',
+            'Keep this code private. It opens your Willow profile.'],
+            'link': ('Open the Willow app', f'{app_url.rstrip("/")}/app')})
     out.append({'kind': 'note', 'lines': [DISCLAIMER]})
     return out
 
 
-def render(p: dict, matches: list[dict]) -> tuple[str, str]:
+def render(p: dict, matches: list[dict], login_code: str | None = None, app_url: str = '') -> tuple[str, str]:
     """(text, html) built only from the stored matching results."""
     text, parts = [], []
     e = html.escape
-    for s in sections(p, matches):
+    for s in sections(p, matches, login_code, app_url):
         if s['kind'] in ('intro', 'note'):
             text += s['lines'] + ['']
             style = 'color:#6b6a5f;font-size:13px' if s['kind'] == 'note' else ''
@@ -169,12 +175,13 @@ def deliver_results(database: Database, settings: Settings, call_id: str) -> str
     """Decide, record and (at most once) send the results email for a processed call. Returns the delivery status."""
     with database.transaction() as db:
         call = db.get(Call, call_id)
-        status, reason = decide(call)
+        status, reason = decide(call, settings.email_override_to)
         p = call.profile or {}
-        recipient = p.get('results_email') or ''
+        recipient = settings.email_override_to or p.get('results_email') or ''
         text_body = page = None
         if status == 'pending':
-            text_body, page = render(p, call.matches)
+            farmer = db.get(Farmer, call.phone) if call.phone else None
+            text_body, page = render(p, call.matches, farmer and farmer.login_code, settings.frontend_origin)
             if not settings.email_enabled():
                 status, reason = 'dry_run', 'EMAIL_DELIVERY_ENABLED is false; email generated, not sent'
     try:

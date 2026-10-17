@@ -10,6 +10,7 @@ export function CasePage() {
   const match = store.result.matches.find((m) => m.program_id === programId)
   const { markRead } = store
   const [sending, setSending] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     if (match) markRead(match.program_id)
@@ -25,10 +26,15 @@ export function CasePage() {
   }
 
   const status = store.statusOf(match)
-  const approve = () => {
+  const approve = async () => {
     setSending(true)
-    // ponytail: approval is local until the backend has an approve endpoint.
-    window.setTimeout(() => { store.approve(match.program_id); setSending(false) }, 600)
+    setFailed(false)
+    try {
+      await store.approve(match.program_id)
+    } catch {
+      setFailed(true)
+    }
+    setSending(false)
   }
 
   return (
@@ -57,18 +63,35 @@ export function CasePage() {
       )}
       {match.deadline && <p className="deadline">Deadline: {new Date(`${match.deadline}T12:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>}
 
+      {match.next_action && (
+        <section className="group">
+          <h2 className="group-label">Next step</h2>
+          <ul className="card-list" role="list"><li>{match.next_action}</li></ul>
+        </section>
+      )}
+      {!!match.sources?.length && (
+        <section className="group">
+          <h2 className="group-label">Official sources</h2>
+          <ul className="card-list sources" role="list">
+            {match.sources.map((s) => <li key={s.url}><a href={s.url} target="_blank" rel="noreferrer">{s.title}</a></li>)}
+          </ul>
+        </section>
+      )}
+      <p className="note">Willow finds programs that may fit. The agency decides who qualifies.</p>
+
       <div className="actions">
         {status === 'likely' && (
           <>
             {!store.detailsConfirmed && (
               <Link className="check-first" to="/app/details">Check your details first →</Link>
             )}
+            {failed && <p className="save-error" role="alert">Couldn’t save your approval. Check your connection and try again.</p>}
             <button className="btn btn-leaf" onClick={approve} disabled={sending}>
-              {sending ? 'Sending…' : 'Approve & send'}
+              {sending ? 'Saving…' : 'Approve this program'}
             </button>
           </>
         )}
-        {status === 'submitted' && <p className="sent">Sent with your approval. Willow will text you with updates.</p>}
+        {status === 'submitted' && <p className="sent">You approved this. Willow will follow up with next steps.</p>}
         <CallButton number={HOTLINE} label={status === 'possible' ? 'Call Willow to answer' : 'Call Willow about this'}
           variant={status === 'possible' ? 'btn-dark' : 'btn-ghost'} />
       </div>

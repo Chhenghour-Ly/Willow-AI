@@ -171,3 +171,15 @@
   font-weight: 500; animation: pop-in 300ms var(--ease-out);
 }
 @keyframes pop-in { from { opacity: 0; transform: scale(0.96); } }
+
+/* Sign-in */
+.sign-out { margin-left: auto; }
+.login { display: grid; gap: 8px; padding-top: 48px; }
+.code-input {
+  font: inherit; font-size: 2rem; font-weight: 600; letter-spacing: 0.4em; text-align: center;
+  padding: 12px 0 12px 0.4em; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--text);
+  width: 100%; min-height: 64px;
+}
+.code-input:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+.login-error, .save-error { background: var(--wait-bg); color: var(--wait-text); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 0.9375rem; }
+.sources a { color: var(--leaf-deep); text-decoration: underline; overflow-wrap: anywhere; }

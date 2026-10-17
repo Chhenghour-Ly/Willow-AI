@@ -8,13 +8,24 @@ export function DetailsPage() {
   const { markRead } = store
   const [editing, setEditing] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => { markRead('details') }, [markRead])
 
-  const save = (key: string) => {
-    if (draft.trim()) store.editProfile(key, draft.trim())
-    setEditing(null)
+  const run = async (action: () => Promise<void>) => {
+    setBusy(true)
+    setFailed(false)
+    try {
+      await action()
+      setEditing(null)
+    } catch {
+      setFailed(true)
+    }
+    setBusy(false)
   }
+
+  const save = (key: string) => (draft.trim() ? run(() => store.editProfile(key, draft.trim())) : setEditing(null))
 
   return (
     <div className="sheet">
@@ -40,7 +51,7 @@ export function DetailsPage() {
                         maxLength={200} enterKeyHint="done" />
                       <div className="field-buttons">
                         <button type="button" className="link-btn" onClick={() => setEditing(null)}>Cancel</button>
-                        <button type="submit" className="link-btn strong">Save</button>
+                        <button type="submit" className="link-btn strong" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
                       </div>
                     </form>
                   ) : (
@@ -52,7 +63,7 @@ export function DetailsPage() {
                           {value === null && <span className="flag">check</span>}
                         </span>
                       </div>
-                      {!store.detailsConfirmed && (
+                      {!store.detailsConfirmed && key !== 'phone' && (
                         <button className="link-btn" onClick={() => { setEditing(key); setDraft(value ?? '') }}
                           aria-label={`Edit ${label}`}>Edit</button>
                       )}
@@ -66,9 +77,10 @@ export function DetailsPage() {
       ))}
 
       <div className="actions">
+        {failed && <p className="save-error" role="alert">Couldn’t save. Check your connection and try again.</p>}
         {store.detailsConfirmed
           ? <p className="sent">Thanks. Willow will use these details for your applications.</p>
-          : <button className="btn btn-leaf" onClick={store.confirmDetails}>Looks right</button>}
+          : <button className="btn btn-leaf" disabled={busy} onClick={() => run(store.confirmDetails)}>Looks right</button>}
       </div>
     </div>
   )

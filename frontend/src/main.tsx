@@ -12,7 +12,6 @@ import { Inbox } from './app/Inbox'
 import { Cases } from './app/Cases'
 import { CasePage } from './app/CasePage'
 import { DetailsPage } from './app/DetailsPage'
-import { ReportLink } from './app/ReportLink'
 
 const router = createBrowserRouter([
   {
@@ -22,7 +21,6 @@ const router = createBrowserRouter([
       { path: '/about', element: <About /> },
     ],
   },
-  { path: '/r/:callId', element: <ReportLink /> },
   {
     path: '/app',
     element: <AppShell />,

@@ -18,6 +18,8 @@ export interface Match {
   deadline: string | null
   required_documents: string[]
   synthetic: boolean
+  next_action?: string
+  sources?: { title: string; url: string }[]
 }
 
 export type Profile = Record<string, string | number | boolean | string[] | null>
@@ -29,30 +31,98 @@ export interface CallResult {
   matches: Match[]
 }
 
+/** What the farmer has done in the app for one call, saved in Willow's database. */
+export interface FarmerState {
+  approved: string[]
+  edits: Record<string, string>
+  confirmed: boolean
+}
+
+export interface Me {
+  phone: string
+  calls: { call_id: string; status: string; received_at: string }[]
+  call: CallResult | null
+  state: FarmerState
+}
+
 export const SAMPLE = sample as CallResult
 
 export const HOTLINE = import.meta.env.VITE_HOTLINE || '+14086862433'
-const API_URL = import.meta.env.VITE_API_URL || ''
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 
 export function formatPhone(e164: string) {
   const d = e164.replace(/\D/g, '').slice(-10)
   return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : e164
 }
 
-export async function loadCall(callId: string | null): Promise<CallResult> {
-  if (!callId || !API_URL) return SAMPLE
-  const response = await fetch(`${API_URL}/api/matches/${encodeURIComponent(callId)}`)
-  if (response.status === 404) throw new Error('not_found')
-  if (!response.ok) throw new Error('unavailable')
-  return response.json()
+interface ApiItem { text: string }
+export interface ApiMatch {
+  program_id: string
+  program_name: string
+  agency: string
+  description: string | null
+  repayable: boolean
+  fit_status: 'potential_fit' | 'needs_information' | 'unlikely_fit'
+  reasons: ApiItem[]
+  obstacles: ApiItem[]
+  missing_requirements: ApiItem[]
+  application_deadline: { date: string } | null
+  official_source_urls: { title: string; url: string }[]
+  next_action: string
+  relevance: number
 }
+
+const FIT: Record<ApiMatch['fit_status'], MatchStatus> = {
+  potential_fit: 'likely', needs_information: 'possible', unlikely_fit: 'not_eligible',
+}
+
+/** Backend match (USDA wording, sources) into the shape the app screens use. */
+export function fromApi(m: ApiMatch): Match {
+  const text = (items: ApiItem[]) => items.map((i) => i.text)
+  return {
+    program_id: m.program_id, name: m.program_name, agency: m.agency,
+    kind: m.repayable ? 'loan' : 'grant', status: FIT[m.fit_status], score: m.relevance,
+    met: text(m.reasons), blocked: text(m.obstacles), unknown: text(m.missing_requirements),
+    explanation: m.description ?? '', amount: null, deadline: m.application_deadline?.date ?? null,
+    required_documents: [], synthetic: false, next_action: m.next_action,
+    sources: m.official_source_urls ?? [],
+  }
+}
+
+async function api<T>(path: string, code: string, body?: object): Promise<T> {
+  let response: Response
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      method: body ? 'POST' : 'GET',
+      headers: { 'X-Farmer-Code': code, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+  } catch {
+    throw new Error('unavailable')
+  }
+  if (response.status === 401) throw new Error('bad_code')
+  if (response.status === 429) throw new Error('too_many')
+  if (!response.ok) throw new Error('unavailable')
+  return response.json() as Promise<T>
+}
+
+export async function loadMe(code: string): Promise<Me> {
+  const me = await api<Omit<Me, 'call'> & { call: (Omit<CallResult, 'matches'> & { matches: ApiMatch[] }) | null }>('/api/me', code)
+  return { ...me, call: me.call && { ...me.call, profile: me.call.profile ?? {}, matches: me.call.matches.map(fromApi) } }
+}
+
+export const approveProgram = (code: string, call_id: string, program_id: string) =>
+  api<FarmerState>('/api/me/approvals', code, { call_id, program_id })
+
+export const saveDetails = (code: string, call_id: string, change: { edits?: Record<string, string>; confirmed?: boolean }) =>
+  api<FarmerState>('/api/me/details', code, { call_id, ...change })
 
 export function displayName(match: Match) {
   return match.name.replace(/\s*\(synthetic\)$/, '')
 }
 
 export function statusLabel(status: CaseStatus) {
-  return { likely: 'Good fit', possible: 'Needs answers', not_eligible: 'Not a fit', submitted: 'Submitted' }[status]
+  return { likely: 'Good fit', possible: 'Needs answers', not_eligible: 'Not a fit', submitted: 'Approved' }[status]
 }
 
 export function money(n: number) {
@@ -67,10 +137,11 @@ export function amountLine(match: Match) {
 
 /** Short inbox preview, written as Willow would say it. */
 export function preview(match: Match, status: CaseStatus) {
-  if (status === 'submitted') return 'Sent with your approval. We’ll text you when we hear back.'
+  if (status === 'submitted') return 'You approved this. Willow will follow up with next steps.'
   if (status === 'possible') return `You may qualify. ${match.unknown.length} question${match.unknown.length === 1 ? '' : 's'} left.`
+  if (status === 'not_eligible') return 'Probably not a fit right now. Tap to see why.'
   const amount = amountLine(match)
-  return `You likely qualify${amount ? ` — ${amount.toLowerCase()}` : ''}. Tap to review and send.`
+  return `This may fit your farm${amount ? ` — ${amount.toLowerCase()}` : ''}. Tap to review and approve.`
 }
 
 export function relativeTime(epochSeconds: number, now = new Date()) {
@@ -86,32 +157,30 @@ function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
 }
 
-/** Profile fields shown on "Your details", grouped the way a farmer talks about them. */
+/** Profile fields shown on "Your details", grouped the way a farmer talks about them. Keys match the backend. */
 export const PROFILE_SECTIONS: { title: string; fields: [string, string][] }[] = [
   { title: 'You', fields: [['farmer_name', 'Name'], ['phone', 'Phone']] },
   {
     title: 'Your farm',
-    fields: [['state', 'State'], ['county', 'County'], ['crops', 'Crops'], ['total_acres', 'Total acres'],
-      ['years_farming', 'Years farming'], ['is_organic', 'Certified organic']],
+    fields: [['state', 'State'], ['county', 'County'], ['crops', 'Crops'], ['total_farm_acres', 'Total acres'],
+      ['land_control', 'Own or lease']],
   },
   {
-    title: 'The damage',
-    fields: [['damage_type', 'Cause'], ['loss_date', 'Date of loss'], ['acres_damaged', 'Acres damaged'],
-      ['loss_percent', 'Percent lost']],
+    title: 'Your project',
+    fields: [['primary_problem', 'Problem'], ['desired_project', 'What you want to do'], ['project_acres', 'Acres in project']],
   },
-  { title: 'Money', fields: [['annual_income', 'Yearly farm income'], ['has_crop_insurance', 'Crop insurance']] },
+  { title: 'Money', fields: [['total_project_cost_usd', 'Project cost'], ['assistance_needed_usd', 'Help needed']] },
 ]
+
+const WORDS: Record<string, string> = { owned: 'Own', leased: 'Lease', other: 'Other' }
 
 export function showValue(key: string, value: Profile[string]) {
   if (value === null || value === undefined || value === '' || (Array.isArray(value) && !value.length)) return null
   if (typeof value === 'boolean') return value ? 'Yes' : 'No'
   if (Array.isArray(value)) return value.map(cap).join(', ')
-  if (key === 'annual_income' && typeof value === 'number') return `$${value.toLocaleString()}`
-  if (key === 'loss_percent') return `${value}%`
-  if (key === 'damage_type') return cap(String(value).replace('_', ' '))
-  if (key === 'loss_date') return new Date(`${value}T12:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  if (key.endsWith('_usd') && typeof value === 'number') return `$${value.toLocaleString()}`
   if (key === 'phone') return formatPhone(String(value))
-  return String(value)
+  return WORDS[String(value)] ?? String(value)
 }
 
 function cap(s: string) {

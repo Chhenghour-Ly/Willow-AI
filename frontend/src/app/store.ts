@@ -7,10 +7,11 @@ export interface CallStore {
   statusOf: (match: Match) => CaseStatus
   isRead: (id: string) => boolean
   markRead: (id: string) => void
-  approve: (id: string) => void
-  editProfile: (key: string, value: string) => void
+  // These save to Willow's database and reject if the save fails.
+  approve: (id: string) => Promise<void>
+  editProfile: (key: string, value: string) => Promise<void>
   detailsConfirmed: boolean
-  confirmDetails: () => void
+  confirmDetails: () => Promise<void>
 }
 
 export const CallContext = createContext<CallStore | null>(null)

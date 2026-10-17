@@ -1,9 +1,10 @@
 import json
+import secrets
 import time
 from contextlib import contextmanager
 from pathlib import Path
 
-from sqlalchemy import JSON, Float, Integer, String, UniqueConstraint, create_engine, text
+from sqlalchemy import JSON, Float, Integer, String, UniqueConstraint, create_engine, select, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
 
@@ -71,11 +72,37 @@ class SmsDelivery(Base):
     updated_at: Mapped[float] = mapped_column(Float, default=time.time, onupdate=time.time)
 
 
+class Farmer(Base):
+    """One profile per caller phone. The 6-digit login code opens it in the farmer app."""
+    __tablename__ = 'farmers'
+    phone: Mapped[str] = mapped_column(String, primary_key=True)
+    login_code: Mapped[str] = mapped_column(String, unique=True)
+    # {call_id: {'approved': [program_id], 'edits': {field: value}, 'confirmed': bool}}
+    state: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[float] = mapped_column(Float, default=time.time)
+    updated_at: Mapped[float] = mapped_column(Float, default=time.time, onupdate=time.time)
+
+
 class ReportLink(Base):
     __tablename__ = 'report_links'
     call_id: Mapped[str] = mapped_column(String, primary_key=True)
     token_hash: Mapped[str] = mapped_column(String, unique=True)
     expires_at: Mapped[float] = mapped_column(Float)
+
+
+def ensure_farmer(db, phone: str) -> Farmer:
+    """The farmer for this phone, created with a fresh unique 6-digit code the first time."""
+    farmer = db.get(Farmer, phone)
+    if farmer:
+        return farmer
+    while True:
+        code = f'{secrets.randbelow(10**6):06d}'
+        if not db.scalar(select(Farmer).where(Farmer.login_code == code)):
+            break
+    farmer = Farmer(phone=phone, login_code=code, state={})
+    db.add(farmer)
+    db.flush()
+    return farmer
 
 
 def engine_url(url):

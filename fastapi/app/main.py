@@ -1,12 +1,15 @@
 import json
 import hashlib
 import logging
+import re
 import secrets
 import threading
 import time
 from datetime import date, datetime, timezone
 from pathlib import Path
+from typing import Annotated
 
+from pydantic import BaseModel, Field as PydanticField
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,7 +17,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy import select
 
 from app.config import Settings
-from app.db import Call, Database, Program, ReportLink
+from app.db import Call, Database, Farmer, Program, ReportLink, ensure_farmer
 from app.matching import match_programs
 from app.profile import call_id_of, extract_profile, structured_data, transcript_of
 from app.results_email import delivery_summary, deliver_results, render as render_email, resume_interrupted
@@ -30,6 +33,32 @@ def same_secret(given, expected):
 
 def iso(epoch):
     return datetime.fromtimestamp(epoch, timezone.utc).isoformat()
+
+
+def public_profile(profile):
+    """The profile without consent evidence, which stays server-side."""
+    profile = dict(profile or {}) or None
+    if profile:
+        profile.pop('email_consent_statement', None)
+        profile.pop('sms_consent_statement', None)
+    return profile
+
+
+LOGIN_WINDOW, LOGIN_MAX_FAILURES = 600, 30
+# Fields a farmer may correct from the app; stored as edits next to what Willow heard, never overwriting it.
+EDITABLE = {'farmer_name', 'state', 'county', 'crops', 'total_farm_acres', 'land_control', 'primary_problem',
+            'desired_project', 'project_acres', 'total_project_cost_usd', 'assistance_needed_usd'}
+
+
+class Approval(BaseModel):
+    call_id: str = PydanticField(max_length=100)
+    program_id: str = PydanticField(max_length=100)
+
+
+class Details(BaseModel):
+    call_id: str = PydanticField(max_length=100)
+    edits: dict[str, Annotated[str, PydanticField(max_length=200)]] = {}
+    confirmed: bool = False
 
 
 def process_call(database: Database, settings: Settings, call_id: str):
@@ -60,6 +89,8 @@ def process_call(database: Database, settings: Settings, call_id: str):
         call.payload = payload
         call.profile = profile.model_dump(mode='json') if profile else None
         call.matches, call.status, call.error = matches, status, error
+        if call.phone:
+            ensure_farmer(db, call.phone)
     log.info('call_id=%s status=%s profile_source=%s matches=%d', call_id, status,
              profile.source if profile else '-', len(matches))
     try:
@@ -78,6 +109,8 @@ def resume_work(database: Database, settings: Settings):
         for call in db.scalars(select(Call).where(Call.status.in_(('received', 'processing')))):
             call.status = 'received'
         waiting = [c.call_id for c in db.scalars(select(Call).where(Call.status == 'received'))]
+        for phone in db.scalars(select(Call.phone).where(Call.phone.is_not(None)).distinct()):
+            ensure_farmer(db, phone)
     for call_id in waiting:
         process_call(database, settings, call_id)
     resume_interrupted(database, settings)
@@ -93,8 +126,8 @@ def create_app(settings=None):
     app.state.db = database = Database(settings.database_url)
     database.sync_programs(Path(settings.programs_path))
     threading.Thread(target=resume_work, args=(database, settings), daemon=True).start()
-    app.add_middleware(CORSMiddleware, allow_origins=[settings.frontend_origin], allow_methods=['GET'],
-                       allow_headers=['X-Api-Key'])
+    app.add_middleware(CORSMiddleware, allow_origins=[settings.frontend_origin], allow_methods=['GET', 'POST'],
+                       allow_headers=['X-Api-Key', 'X-Farmer-Code', 'Content-Type'])
 
     @app.middleware('http')
     async def private_responses(request, call_next):
@@ -167,10 +200,7 @@ def create_app(settings=None):
                 raise HTTPException(404, 'Call not found')
             email = delivery_summary(database, call_id)
             sms = sms_summary(database, call_id)
-            profile = dict(call.profile or {}) or None
-            if profile:
-                profile.pop('email_consent_statement', None)  # consent evidence stays server-side
-                profile.pop('sms_consent_statement', None)
+            profile = public_profile(call.profile)
             return {'call_id': call.call_id, 'status': call.status, 'error': call.error,
                     'received_at': iso(call.created_at), 'updated_at': iso(call.updated_at),
                     'profile': profile, 'matches': call.matches,
@@ -190,6 +220,73 @@ def create_app(settings=None):
                     'received_at': iso(call.created_at), 'ended_reason': message.get('endedReason'),
                     'transcript_chars': len(transcript_of(message)),
                     'structured_output': structured_data(message), 'profile': call.profile}
+
+    # ponytail: one global failure window; per-IP limits need a trusted client IP (ngrok hides it).
+    failures: list[float] = []
+
+    def require_farmer(x_farmer_code: str | None = Header(default=None)) -> str:
+        """The phone of the farmer whose 6-digit code was sent; 401 for a wrong code, 429 after too many."""
+        now = time.time()
+        failures[:] = [t for t in failures if now - t < LOGIN_WINDOW]
+        if len(failures) >= LOGIN_MAX_FAILURES:
+            raise HTTPException(429, 'Too many wrong codes; try again in a few minutes')
+        code = (x_farmer_code or '').strip()
+        with database.transaction() as db:
+            farmer = db.scalar(select(Farmer).where(Farmer.login_code == code)) if re.fullmatch(r'\d{6}', code) else None
+        if not farmer:
+            failures.append(now)
+            raise HTTPException(401, 'Invalid login code')
+        return farmer.phone
+
+    def farmer_call(db, phone: str, call_id: str) -> Call:
+        call = db.get(Call, call_id)
+        if not call or call.phone != phone:
+            raise HTTPException(404, 'Call not found')
+        return call
+
+    def save_state(phone: str, call_id: str, change) -> dict:
+        with database.transaction() as db:
+            call = farmer_call(db, phone, call_id)
+            farmer = db.get(Farmer, phone)
+            state = dict(farmer.state or {})
+            entry = {'approved': [], 'edits': {}, 'confirmed': False, **state.get(call_id, {})}
+            change(entry, call)
+            farmer.state = {**state, call_id: entry}  # reassign so SQLAlchemy sees the JSON change
+            return entry
+
+    @app.get('/api/me')
+    def get_me(phone: str = Depends(require_farmer)) -> dict:
+        """Everything the farmer app shows: the latest matched call plus the farmer's approvals and edits."""
+        with database.transaction() as db:
+            farmer = db.get(Farmer, phone)
+            calls = list(db.scalars(select(Call).where(Call.phone == phone).order_by(Call.created_at.desc())))
+            latest = next((c for c in calls if c.status in ('completed', 'needs_information')), None)
+            return {
+                'phone': phone,
+                'calls': [{'call_id': c.call_id, 'status': c.status, 'received_at': iso(c.created_at)} for c in calls],
+                'call': latest and {'call_id': latest.call_id, 'created_at': latest.created_at, 'status': latest.status,
+                                    'profile': public_profile(latest.profile), 'matches': latest.matches},
+                'state': {'approved': [], 'edits': {}, 'confirmed': False,
+                          **((farmer.state or {}).get(latest.call_id, {}) if latest else {})},
+                'disclaimer': 'Potential matches only. The agency decides eligibility.'}
+
+    @app.post('/api/me/approvals')
+    def approve(body: Approval, phone: str = Depends(require_farmer)) -> dict:
+        def change(entry, call):
+            if body.program_id not in {m['program_id'] for m in call.matches}:
+                raise HTTPException(404, 'Program not in this call')
+            if body.program_id not in entry['approved']:
+                entry['approved'] = [*entry['approved'], body.program_id]
+        return save_state(phone, body.call_id, change)
+
+    @app.post('/api/me/details')
+    def update_details(body: Details, phone: str = Depends(require_farmer)) -> dict:
+        if set(body.edits) - EDITABLE:
+            raise HTTPException(422, 'Unknown profile field')
+        def change(entry, call):
+            entry['edits'] = {**entry['edits'], **{k: v.strip() for k, v in body.edits.items() if v.strip()}}
+            entry['confirmed'] = entry['confirmed'] or body.confirmed
+        return save_state(phone, body.call_id, change)
 
     @app.get('/report/{token}', response_class=HTMLResponse)
     def get_private_report(token: str):

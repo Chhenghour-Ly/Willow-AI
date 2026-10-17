@@ -101,6 +101,15 @@ def test_no_email_without_consent_and_valid_address(make, change, expected):
     assert resend.sent == []
 
 
+@pytest.mark.parametrize('heard', ['rajivostner1@gmail.com', 'unknown'])
+def test_override_address_replaces_heard_address_but_still_needs_consent(make, heard):
+    resend = Resend()
+    with make(resend, email_override_to='tester@example.com') as client:
+        deliver(client, carolina(**{**CONSENT, 'results_email': heard}))
+        deliver(client, carolina('no-consent', **{**CONSENT, 'email_delivery_consent': False}))
+    assert [r['body']['to'] for r in resend.sent] == [['tester@example.com']]
+
+
 def test_duplicate_webhook_sends_once(make):
     resend = Resend()
     with make(resend) as client:

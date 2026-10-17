@@ -5,9 +5,9 @@ import { useCall } from './store'
 const KIND = { aid: 'Disaster aid', grant: 'Grant', loan: 'Loan', insurance: 'Insurance' }
 
 const GROUPS: { status: CaseStatus; title: string }[] = [
-  { status: 'likely', title: 'Ready to send' },
+  { status: 'likely', title: 'Ready to approve' },
   { status: 'possible', title: 'Needs your answers' },
-  { status: 'submitted', title: 'Sent' },
+  { status: 'submitted', title: 'Approved' },
   { status: 'not_eligible', title: 'Not a fit this time' },
 ]
 
