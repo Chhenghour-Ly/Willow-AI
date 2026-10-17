@@ -44,7 +44,10 @@ Farmer calls Willow (Vapi voice agent)
 FastAPI backend  ──►  normalize profile  ──►  search official USDA program text
         │                                     check each requirement
         ▼
-Results API  ──►  results email (with consent)  ·  website + farmer app
+Supabase (Postgres)  ──►  results email with a 6-digit login code (with consent)
+        │
+        ▼
+Farmer app (Vercel)  ──►  sign in with the code, review matches, fix details, approve
 ```
 
 - **Voice agent:** Vapi assistant with a structured "Farmer Profile" output.
@@ -55,7 +58,14 @@ Results API  ──►  results email (with consent)  ·  website + farmer app
 - **Programs today:** USDA EQIP (NRCS) and FSA Operating Microloan.
 - **Results email:** if the farmer explicitly agrees on the call and confirms an address, the full
   results are emailed automatically (Resend), once per call. Nothing is sent without consent.
-- **App:** a phone-first web app farmers can add to their home screen.
+- **Login code:** each caller phone gets its own farmer profile and a unique 6-digit code,
+  sent at the end of every results email with a link to the app.
+- **App:** a phone-first web app farmers can add to their home screen. After signing in
+  (from the app or the homepage hero) the farmer sees their latest call's matches, can
+  correct what Willow heard, and approves the programs they want. Choices are saved to their
+  profile; nothing is submitted to an agency automatically.
+- **Database:** Supabase Postgres, reached only by the backend (row-level security, no
+  public policies). SQLite works locally with no setup.
 
 ## Repository
 
@@ -87,6 +97,17 @@ npm run dev                      # http://localhost:5173
 ```
 
 More detail in [`fastapi/README.md`](fastapi/README.md) and [`frontend/README.md`](frontend/README.md).
+
+## Deploy
+
+| Piece | Where | Settings |
+| --- | --- | --- |
+| Frontend | Vercel ([willow-ai.vercel.app](https://willow-ai.vercel.app)), root `frontend/` | `VITE_API_URL` = public backend URL, `VITE_HOTLINE` |
+| Backend | Runs locally, exposed with `ngrok http 8000` | `fastapi/.env`; `FRONTEND_ORIGIN=https://willow-ai.vercel.app,http://localhost:5173` |
+| Database | Supabase | `DATABASE_URL` in `fastapi/.env` only (Session pooler URI) |
+| Voice | Vapi | Server URL `https://<ngrok>/webhooks/vapi` |
+
+Supabase credentials never go in Vercel: the frontend only talks to the backend.
 
 ## Challenges
 

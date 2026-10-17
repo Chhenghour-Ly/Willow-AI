@@ -10,14 +10,26 @@ npm run dev        # http://localhost:5173
 npm test
 ```
 
-- `/` `/about`: the website.
-- `/app`: the app. Full screen on a phone; inside a phone frame on wide screens.
-- `/r/<call_id>`: link for the after-call text. Remembers the call on this
-  device and opens the inbox.
+- `/` `/about`: the website. The hero has a 6-digit code sign-in that opens the app.
+- `/app`: the farmer app. Full screen on a phone; inside a phone frame on wide screens.
+  Asks for the login code from the results email, then loads the farmer's latest call
+  from `GET /api/me` (header `X-Farmer-Code`).
 
-With `VITE_API_URL` empty, the app shows the built-in sample results
-(`src/sample-matches.json`). Set it to the FastAPI backend to load real
-results from `GET /api/matches/{call_id}`.
+Approving a program, editing a detail and "Looks right" are saved to the farmer's
+profile in Willow's database (`POST /api/me/approvals`, `POST /api/me/details`).
+Approving records the farmer's choice; nothing is submitted to an agency. Which
+messages were opened is remembered in the browser only. The homepage phone preview
+uses sample data (`src/sample-matches.json`).
 
-Approvals and edits are stored in the browser only for now. Program data is
-synthetic sample data.
+## Environment
+
+Only public values go here; every `VITE_` variable is visible in the browser.
+Never put Supabase or other backend secrets in the frontend.
+
+| Variable | Value |
+| --- | --- |
+| `VITE_API_URL` | Public URL of the FastAPI backend (e.g. the ngrok URL) |
+| `VITE_HOTLINE` | Hotline in E.164, e.g. `+14086862433` |
+
+On Vercel, set both under Project → Settings → Environment Variables and redeploy:
+Vite bakes them in at build time.

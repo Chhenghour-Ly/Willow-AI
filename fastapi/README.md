@@ -37,10 +37,23 @@ said conflicts with a rule). `relevance` scores retrieved text, not eligibility.
 | `POST /webhooks/vapi` | `X-Vapi-Secret` | `{status, call_id}` |
 | `GET /api/matches/{call_id}` | `X-Api-Key` | `{status, profile, matches[...]}` |
 | `GET /api/calls/{call_id}` | `X-Api-Key` | receipt check: status, transcript length, raw structured output |
+| `GET /api/me` | `X-Farmer-Code` | the farmer's calls, latest matched call, approvals and edits |
+| `POST /api/me/approvals` | `X-Farmer-Code` | `{call_id, program_id}` → saved state |
+| `POST /api/me/details` | `X-Farmer-Code` | `{call_id, edits?, confirmed?}` → saved state |
 
 Each match: `program_id, program_name, fit_status, reasons, obstacles,
 missing_requirements, application_deadline, official_source_urls, evidence,
 next_action`.
+
+## Farmer login codes
+
+Each caller phone number gets one `farmers` row with a unique 6-digit `login_code`,
+created when its first call is processed (existing calls are backfilled at startup).
+Every results email ends with the code and a link to the app (the first
+`FRONTEND_ORIGIN`). The app sends the code as `X-Farmer-Code`; a farmer only sees and
+changes their own calls. Approvals, detail edits and confirmation are stored per call
+in `farmers.state`, next to what Willow heard, never overwriting it. After 30 wrong
+codes in 10 minutes every login gets `429` for the rest of the window.
 
 ## Structured output schema (Vapi)
 
@@ -61,6 +74,11 @@ python -m pytest -q
 python -m uvicorn app.main:create_app --factory --port 8000
 ngrok http 8000               # Vapi Server URL: https://<ngrok>/webhooks/vapi
 ```
+
+Database: SQLite (`willow.db`) by default. For Supabase, set `DATABASE_URL` to the
+**Session pooler** URI from Supabase → Connect (the direct `db.<ref>.supabase.co` host is
+IPv6-only). Tables are created on startup with row-level security on and no policies, so
+only this backend can read them.
 
 Inspect calls from the terminal:
 
@@ -98,6 +116,8 @@ Setup:
 2. In `fastapi/.env` set `RESEND_API_KEY` and `FARMBRIDGE_FROM_EMAIL`. Without a verified
    domain use `onboarding@resend.dev`; it only delivers to your own Resend account email.
 3. Send one test, then set `EMAIL_DELIVERY_ENABLED=true` and restart.
+4. Demos only: `EMAIL_OVERRIDE_TO=you@example.com` sends every results email there instead
+   of the address heard on the call (consent is still required). Remove it for real farmers.
 
 ```powershell
 python -m app.results_email <call_id>                         # status + write outbox/<call_id>.html
@@ -108,7 +128,7 @@ python -m app.results_email test you@example.com [call_id]    # one real email t
 
 SMS is independent of email. Vapi must explicitly collect `deep_matching_requested=true`, `sms_delivery_consent=true`, a confirmed E.164 `sms_results_phone`, and an `sms_consent_statement` quoting the farmer's permission to text that number. The Vapi assistant and structured-output schema are owned by the voice-agent teammate; older calls and fixtures without these fields do not send SMS. Matching must be `completed`.
 
-The text lists up to two potential USDA matches and includes a private report link. `/report/<token>` serves the stored full report from FastAPI without exposing the shared API key; the link expires after 30 days. For local demos, set `REPORT_BASE_URL` to the current public HTTPS ngrok origin pointing at this backend. The React farmer app still shows sample data and is not the private report page.
+The text lists up to two potential USDA matches and includes a private report link. `/report/<token>` serves the stored full report from FastAPI without exposing the shared API key; the link expires after 30 days. For local demos, set `REPORT_BASE_URL` to the current public HTTPS ngrok origin pointing at this backend.
 
 Set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM_NUMBER` to an SMS-capable number in your Twilio account. Leave `SMS_DELIVERY_ENABLED=false` for dry runs; set it to `true` only after Twilio is ready. US application texts sent from a local 10-digit number require Twilio A2P 10DLC registration. On a Twilio trial, recipients may need to be verified in the Twilio account.
 
@@ -120,6 +140,8 @@ The authenticated `/api/matches/<call_id>` response includes `sms_delivery`. `su
 
 ## Known limits
 
-- One shared `API_KEY` protects reads; farmer-facing pages need per-farmer sign-in.
+- One shared `API_KEY` protects the `/api/matches` and `/api/calls` reads.
+- Login codes don't expire and are stored as plain text (the table is backend-only).
+  The wrong-code limit is global because ngrok hides client IPs.
 - Retrieval is keyword-based over the stored official passages.
 - Tables are created with `create_all`; no migrations.
