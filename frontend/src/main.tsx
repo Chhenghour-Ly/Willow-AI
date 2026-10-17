@@ -7,7 +7,6 @@ import './styles/app.css'
 import { SiteLayout } from './site/SiteLayout'
 import { Home } from './site/Home'
 import { About } from './site/About'
-import { Contact } from './site/Contact'
 import { AppShell } from './app/AppShell'
 import { Inbox } from './app/Inbox'
 import { Cases } from './app/Cases'
@@ -21,7 +20,6 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <Home /> },
       { path: '/about', element: <About /> },
-      { path: '/contact', element: <Contact /> },
     ],
   },
   { path: '/r/:callId', element: <ReportLink /> },

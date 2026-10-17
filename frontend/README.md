@@ -1,6 +1,6 @@
 # Willow frontend
 
-Website (Home, About, Contact) and the phone-shaped Willow app (Inbox, Cases,
+Website (Home, About) and the phone-shaped Willow app (Inbox, Cases,
 case pages, "Your details") in one Vite + React app.
 
 ```powershell
@@ -10,7 +10,7 @@ npm run dev        # http://localhost:5173
 npm test
 ```
 
-- `/` `/about` `/contact`: the website.
+- `/` `/about`: the website.
 - `/app`: the app. Full screen on a phone; inside a phone frame on wide screens.
 - `/r/<call_id>`: link for the after-call text. Remembers the call on this
   device and opens the inbox.

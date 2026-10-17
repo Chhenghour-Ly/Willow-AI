@@ -132,30 +132,6 @@
 .flow strong { color: var(--text); }
 .page .cta { padding-left: 0; padding-right: 0; }
 
-.contact-grid {
-  max-width: 980px; margin: 0 auto clamp(80px, 12vw, 140px); display: grid; grid-template-columns: 1fr 1.2fr; gap: 16px;
-}
-.contact-call {
-  display: grid; align-content: end; gap: 4px; padding: 32px; border-radius: var(--radius-lg);
-  background: var(--ink); color: var(--paper); min-height: 280px;
-  transition: transform 160ms var(--ease-out);
-}
-.contact-call:active { transform: scale(0.98); }
-.contact-call-sub { opacity: 0.7; }
-.contact-form-card { padding: 32px; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow); }
-.contact-form-card h2 { font-size: 1.375rem; letter-spacing: -0.02em; margin-bottom: 18px; }
-.contact-form-card form { display: grid; gap: 14px; }
-.contact-form-card label { display: grid; gap: 6px; font-size: 0.875rem; font-weight: 500; color: var(--muted); }
-.contact-form-card input, .contact-form-card textarea {
-  font-size: 1rem; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line);
-  background: var(--bg); resize: vertical; transition: border-color 150ms ease;
-}
-.contact-form-card input:focus, .contact-form-card textarea:focus { outline: none; border-color: var(--leaf); }
-.contact-form-card .btn { justify-self: start; margin-top: 4px; }
-.form-error { color: #c0412a; font-size: 0.9375rem; }
-.thanks { display: grid; gap: 8px; place-content: center; min-height: 240px; text-align: center; animation: pop-in 300ms var(--ease-out); }
-.thanks p { color: var(--muted); }
-
 /* Footer */
 .footer { background: var(--ink); color: var(--paper); border-radius: 36px 36px 0 0; overflow: hidden; }
 @media (prefers-color-scheme: dark) { .footer { background: #0c0c0b; } }
@@ -173,7 +149,7 @@
 @media (max-width: 760px) {
   .nav-links { display: none; }
   .nav-call { margin-left: auto; }
-  .step-grid, .contact-grid { grid-template-columns: 1fr; }
+  .step-grid { grid-template-columns: 1fr; }
   .hero-art { height: 520px; }
   .hero-farmer { width: 66%; left: -2%; }
   .mock-phone { width: 210px; right: -2%; top: 0; }

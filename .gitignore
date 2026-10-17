@@ -16,6 +16,7 @@ personal-data/
 *.[mM][dD]
 !README.md
 .claude/
+[Cc][Ll][Aa][Uu][Dd][Ee].[mM][dD]
 *.pem
 *.key
 *.p12

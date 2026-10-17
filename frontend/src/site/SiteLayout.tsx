@@ -16,7 +16,6 @@ export function SiteLayout() {
           </Link>
           <div className="nav-links">
             <NavLink to="/about">About</NavLink>
-            <NavLink to="/contact">Contact</NavLink>
           </div>
           <a className="btn btn-dark nav-call" href={`tel:${HOTLINE}`}>Call now</a>
         </nav>
@@ -29,7 +28,6 @@ export function SiteLayout() {
             <div className="footer-links">
               <Link to="/">Home</Link>
               <Link to="/about">About</Link>
-              <Link to="/contact">Contact</Link>
               <Link to="/app">Open the app</Link>
               <a href={`tel:${HOTLINE}`}>{formatPhone(HOTLINE)}</a>
             </div>
