@@ -70,7 +70,7 @@ export function Home() {
         </a>
         <p className="hint">Talk the way you’d talk to a neighbor.</p>
         <HeroLogin />
-        <p className="hint">Want to look around? Enter 000000 to open a sample case.</p>
+        <p className="hint">Just testing? Use 000000 to explore a sample case.</p>
 
         <div className="hero-art">
           <div className="hero-glow" aria-hidden="true" />
