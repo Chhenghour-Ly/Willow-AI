@@ -52,6 +52,7 @@ Inside the app (sign in with code `000000` to try the sample case):
   <tr>
     <td align="center"><img src="screenshots/app-cases.png" alt="Cases ready to approve" width="200" /><br /><sub>Cases</sub></td>
     <td align="center"><img src="screenshots/app-case.png" alt="One program, why it fits" width="200" /><br /><sub>Why it fits</sub></td>
+    <td align="center"><img src="screenshots/app-approve.png" alt="Approve the program or call Willow" width="200" /><br /><sub>Approve or call</sub></td>
     <td align="center"><img src="screenshots/app-details.png" alt="Farmer details to check and edit" width="200" /><br /><sub>Your details</sub></td>
   </tr>
 </table>
