@@ -46,18 +46,21 @@ for, explaining why each one might fit and what to do next.
   </tr>
 </table>
 
-Inside the app (sign in with code `000000` to try the sample case):
+Inside the app (sign in with code `000000` to try the sample case). On a computer the app opens in a phone frame (dark mode):
 
 <table>
   <tr>
-    <td align="center"><img src="screenshots/app-cases.png" alt="Cases ready to approve" width="200" /><br /><sub>Cases</sub></td>
-    <td align="center"><img src="screenshots/app-case.png" alt="One program, why it fits" width="200" /><br /><sub>Why it fits</sub></td>
-    <td align="center"><img src="screenshots/app-approve.png" alt="Approve the program or call Willow" width="200" /><br /><sub>Approve or call</sub></td>
-    <td align="center"><img src="screenshots/app-details.png" alt="Farmer details to check and edit" width="200" /><br /><sub>Your details</sub></td>
+    <td align="center"><img src="screenshots/desk-app-login-dark.png" alt="Open your Willow case, dark mode" width="200" /><br /><sub>Open your case</sub></td>
+    <td align="center"><img src="screenshots/desk-app-inbox-dark.png" alt="Inbox, dark mode" width="200" /><br /><sub>Inbox</sub></td>
+    <td align="center"><img src="screenshots/desk-app-cases-dark.png" alt="Cases, dark mode" width="200" /><br /><sub>Cases</sub></td>
+    <td align="center"><img src="screenshots/desk-app-case-dark.png" alt="Approve or call, dark mode" width="200" /><br /><sub>Approve or call</sub></td>
+    <td align="center"><img src="screenshots/desk-app-details-dark.png" alt="Your details, dark mode" width="200" /><br /><sub>Your details</sub></td>
   </tr>
 </table>
 
-<img src="screenshots/site-hero.png" alt="Willow website on desktop" width="100%" />
+On desktop:
+
+<img src="screenshots/site-hero-dark.png" alt="Willow website on desktop, dark mode" width="100%" />
 
 ## How it works
 

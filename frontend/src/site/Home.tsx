@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
-import { CODE_KEY, HOTLINE, LOGIN_ERRORS, SAMPLE, formatPhone, loadMe } from '../data'
+import { CODE_KEY, DEMO_CODE, HOTLINE, LOGIN_ERRORS, SAMPLE, formatPhone, loadMe } from '../data'
 import { InboxList, matchRow, type Row } from '../app/InboxList'
 
 /** Already called? Check the code here, then open the farmer app signed in. */
@@ -35,6 +35,13 @@ function HeroLogin() {
         <button className="btn btn-dark" disabled={busy || code.length !== 6}>{busy ? 'Opening…' : 'Sign in'}</button>
       </div>
       {error && <p id="hero-code-error" className="hero-login-error" role="alert">{error}</p>}
+      <p className="hero-demo">
+        Just testing? Use{' '}
+        <button type="button" className="demo-code" onClick={() => setCode(DEMO_CODE)} aria-label="Fill in sample code 000000">
+          {DEMO_CODE}
+        </button>{' '}
+        to explore a sample case.
+      </p>
     </form>
   )
 }
@@ -70,7 +77,6 @@ export function Home() {
         </a>
         <p className="hint">Talk the way you’d talk to a neighbor.</p>
         <HeroLogin />
-        <p className="hint">Just testing? Use 000000 to explore a sample case.</p>
 
         <div className="hero-art">
           <div className="hero-glow" aria-hidden="true" />
